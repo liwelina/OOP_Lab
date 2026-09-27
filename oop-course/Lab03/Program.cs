@@ -9,37 +9,37 @@ internal class Program
         Console.OutputEncoding = Encoding.UTF8;
         Console.InputEncoding = Encoding.UTF8;
 
-        PatientManager patientManager = new PatientManager();
-        DoctorManager doctorManager = new DoctorManager();
-        AppointmentManager appointmentManager = new AppointmentManager(patientManager, doctorManager);
+        Clinic clinic = new Clinic("Medical Clinic");
 
-        patientManager.Add(new Patient("Ivan", "Petrenko", DateTime.Today.AddYears(-41), "A+", "0501234567"));
-        patientManager.Add(new Patient("Olena", "Koval", DateTime.Today.AddYears(-33), "B-", "0672345678"));
-        patientManager.Add(new Patient("Maksym", "Boyko", DateTime.Today.AddYears(-16), "O+", "0933456789"));
-        patientManager.Add(new Patient("Maria", "Tkach"));
+        clinic.Patients.Add(new Patient("Ivan", "Petrenko", DateTime.Today.AddYears(-41), "A+", "0501234567"));
+        clinic.Patients.Add(new Patient("Olena", "Koval", DateTime.Today.AddYears(-33), "B-", "0672345678"));
+        clinic.Patients.Add(new Patient("Maksym", "Boyko", DateTime.Today.AddYears(-16), "O+", "0933456789"));
+        clinic.Patients.Add(new Patient("Maria", "Tkach"));
 
-        doctorManager.Add(new Doctor("Oleh", "Sydorenko", "Cardiology", "LIC-001", "0441234567")
+        clinic.Doctors.Add(new Doctor("Oleh", "Sydorenko", "Cardiology", "LIC-001", "0441234567")
         {
             WorkStartHour = 8,
             WorkEndHour = 16
         });
-        doctorManager.Add(new Doctor("Nataliia", "Moroz", "Neurology", "LIC-002", "0442345678")
+        clinic.Doctors.Add(new Doctor("Nataliia", "Moroz", "Neurology", "LIC-002", "0442345678")
         {
             WorkStartHour = 9,
             WorkEndHour = 18
         });
-        doctorManager.Add(new Doctor("Andrii", "Vlasenko", "Pediatrics", "LIC-003", "0443456789"));
+        clinic.Doctors.Add(new Doctor("Andrii", "Vlasenko", "Pediatrics", "LIC-003", "0443456789"));
 
-        appointmentManager.Book(1, 1, DateTime.Now.AddDays(1).Date.AddHours(10), 30);
-        appointmentManager.Book(2, 2, DateTime.Now.AddDays(1).Date.AddHours(11), 45);
-        appointmentManager.Book(3, 3, DateTime.Now.AddDays(2).Date.AddHours(9), 20);
+        clinic.Appointments.Book(1, 1, DateTime.Now.AddDays(1).Date.AddHours(10), 30);
+        clinic.Appointments.Book(2, 2, DateTime.Now.AddDays(1).Date.AddHours(11), 45);
+        clinic.Appointments.Book(3, 3, DateTime.Now.AddDays(2).Date.AddHours(9), 20);
 
         while (true)
         {
-            Console.WriteLine("\n=== CLINIC SYSTEM ===");
+            Console.WriteLine($"\n=== {clinic.Name.ToUpper()} ===");
             Console.WriteLine("1. Patients Menu");
             Console.WriteLine("2. Doctors Menu");
             Console.WriteLine("3. Appointments Menu");
+            Console.WriteLine("4. Schedule for Date");
+            Console.WriteLine("5. Generate Report");
             Console.WriteLine("0. Exit");
             Console.Write("Select an option: ");
 
@@ -49,13 +49,27 @@ internal class Program
             switch (choice)
             {
                 case "1":
-                    RunPatientMenu(patientManager);
+                    RunPatientMenu(clinic);
                     break;
                 case "2":
-                    RunDoctorMenu(doctorManager);
+                    RunDoctorMenu(clinic);
                     break;
                 case "3":
-                    RunAppointmentMenu(appointmentManager, patientManager, doctorManager);
+                    RunAppointmentMenu(clinic);
+                    break;
+                case "4":
+                    Console.Write("Enter date (yyyy-MM-dd): ");
+                    if (DateTime.TryParse(Console.ReadLine(), out DateTime scheduleDate))
+                    {
+                        clinic.DisplaySchedule(scheduleDate);
+                    }
+                    else
+                    {
+                        clinic.DisplaySchedule(DateTime.Now.AddDays(1).Date);
+                    }
+                    break;
+                case "5":
+                    clinic.GenerateReport();
                     break;
                 case "0":
                     return;
@@ -66,7 +80,7 @@ internal class Program
         }
     }
 
-    private static void RunPatientMenu(PatientManager manager)
+    private static void RunPatientMenu(Clinic clinic)
     {
         while (true)
         {
@@ -85,7 +99,7 @@ internal class Program
             switch (choice)
             {
                 case "1":
-                    manager.DisplayAll();
+                    clinic.Patients.DisplayAll();
                     break;
                 case "2":
                     Console.Write("First name: ");
@@ -98,12 +112,12 @@ internal class Program
                     string blood = Console.ReadLine() ?? "Unknown";
                     Console.Write("Phone: ");
                     string phone = Console.ReadLine() ?? "0000000000";
-                    manager.Add(new Patient(fn, ln, DateTime.Today.AddYears(-age), blood, phone));
+                    clinic.Patients.Add(new Patient(fn, ln, DateTime.Today.AddYears(-age), blood, phone));
                     break;
                 case "3":
                     Console.Write("Enter first or last name: ");
                     string q = Console.ReadLine() ?? "";
-                    var found = manager.FindByName(q);
+                    var found = clinic.Patients.FindByName(q);
                     if (found.Length == 0) Console.WriteLine("No one found.");
                     else foreach (var p in found) Console.WriteLine(p);
                     break;
@@ -111,12 +125,12 @@ internal class Program
                     Console.Write("Patient ID to delete: ");
                     if (int.TryParse(Console.ReadLine(), out int id))
                     {
-                        if (manager.Remove(id)) Console.WriteLine($"Patient #{id} removed.");
+                        if (clinic.Patients.Remove(id)) Console.WriteLine($"Patient #{id} removed.");
                         else Console.WriteLine($"Patient #{id} not found.");
                     }
                     break;
                 case "5":
-                    manager.DisplayStats();
+                    clinic.Patients.DisplayStats();
                     break;
                 case "0":
                     return;
@@ -127,7 +141,7 @@ internal class Program
         }
     }
 
-    private static void RunDoctorMenu(DoctorManager manager)
+    private static void RunDoctorMenu(Clinic clinic)
     {
         while (true)
         {
@@ -146,7 +160,7 @@ internal class Program
             switch (choice)
             {
                 case "1":
-                    manager.DisplayAll();
+                    clinic.Doctors.DisplayAll();
                     break;
                 case "2":
                     Console.Write("First name: ");
@@ -163,12 +177,12 @@ internal class Program
                     int.TryParse(Console.ReadLine(), out int start);
                     Console.Write("Shift end hour (0-23): ");
                     int.TryParse(Console.ReadLine(), out int end);
-                    manager.Add(new Doctor(fn, ln, sp, lic, ph) { WorkStartHour = start, WorkEndHour = end });
+                    clinic.Doctors.Add(new Doctor(fn, ln, sp, lic, ph) { WorkStartHour = start, WorkEndHour = end });
                     break;
                 case "3":
                     Console.Write("Speciality to search: ");
                     string sQuery = Console.ReadLine() ?? "";
-                    var docs = manager.FindBySpeciality(sQuery);
+                    var docs = clinic.Doctors.FindBySpeciality(sQuery);
                     if (docs.Length == 0) Console.WriteLine("No doctors found.");
                     else foreach (var d in docs) Console.WriteLine(d);
                     break;
@@ -176,12 +190,12 @@ internal class Program
                     Console.Write("Doctor ID to delete: ");
                     if (int.TryParse(Console.ReadLine(), out int id))
                     {
-                        if (manager.Remove(id)) Console.WriteLine($"Doctor #{id} removed.");
+                        if (clinic.Doctors.Remove(id)) Console.WriteLine($"Doctor #{id} removed.");
                         else Console.WriteLine($"Doctor #{id} not found.");
                     }
                     break;
                 case "5":
-                    manager.DisplayStats();
+                    clinic.Doctors.DisplayStats();
                     break;
                 case "0":
                     return;
@@ -192,7 +206,7 @@ internal class Program
         }
     }
 
-    private static void RunAppointmentMenu(AppointmentManager appManager, PatientManager pManager, DoctorManager dManager)
+    private static void RunAppointmentMenu(Clinic clinic)
     {
         while (true)
         {
@@ -214,17 +228,17 @@ internal class Program
             {
                 case "1":
                     Console.WriteLine("Upcoming appointments:");
-                    appManager.DisplayList(appManager.GetUpcoming());
+                    clinic.Appointments.DisplayList(clinic.Appointments.GetUpcoming());
                     break;
 
                 case "2":
                     Console.WriteLine("--- Available patients ---");
-                    pManager.DisplayAll();
+                    clinic.Patients.DisplayAll();
                     Console.Write("Enter patient ID: ");
                     int.TryParse(Console.ReadLine(), out int pId);
 
                     Console.WriteLine("--- Available doctors ---");
-                    dManager.DisplayAll();
+                    clinic.Doctors.DisplayAll();
                     Console.Write("Enter doctor ID: ");
                     int.TryParse(Console.ReadLine(), out int dId);
 
@@ -240,7 +254,7 @@ internal class Program
                         dur = 30;
                     }
 
-                    appManager.Book(pId, dId, dt, dur);
+                    clinic.Appointments.Book(pId, dId, dt, dur);
                     break;
 
                 case "3":
@@ -248,32 +262,32 @@ internal class Program
                     int.TryParse(Console.ReadLine(), out int cancelId);
                     Console.Write("Reason: ");
                     string reason = Console.ReadLine() ?? "";
-                    appManager.Cancel(cancelId, reason);
+                    clinic.Appointments.Cancel(cancelId, reason);
                     break;
 
                 case "4":
                     Console.Write("Enter appointment ID to complete: ");
                     int.TryParse(Console.ReadLine(), out int compId);
-                    appManager.Complete(compId);
+                    clinic.Appointments.Complete(compId);
                     break;
 
                 case "5":
                     Console.Write("Enter patient ID: ");
                     int.TryParse(Console.ReadLine(), out int searchPId);
-                    appManager.DisplayList(appManager.GetByPatient(searchPId));
+                    clinic.Appointments.DisplayList(clinic.Appointments.GetByPatient(searchPId));
                     break;
 
                 case "6":
                     Console.Write("Enter doctor ID: ");
                     int.TryParse(Console.ReadLine(), out int searchDId);
-                    appManager.DisplayList(appManager.GetByDoctor(searchDId));
+                    clinic.Appointments.DisplayList(clinic.Appointments.GetByDoctor(searchDId));
                     break;
 
                 case "7":
                     Console.Write("Enter date (yyyy-MM-dd): ");
                     if (DateTime.TryParse(Console.ReadLine(), out DateTime searchDate))
                     {
-                        appManager.DisplayList(appManager.GetByDate(searchDate));
+                        clinic.Appointments.DisplayList(clinic.Appointments.GetByDate(searchDate));
                     }
                     else
                     {
