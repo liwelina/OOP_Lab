@@ -13,12 +13,11 @@ namespace Lab01
             int quantity = Convert.ToInt32(Console.ReadLine());
 
             Console.Write("Enter discount: ");
-            int discount = Convert.ToInt32(Console.ReadLine());
+            double discount = Convert.ToDouble(Console.ReadLine());
 
-            double sum = price * quantity * (1 - discount / 100.0);
+            double sum = price * quantity * (1 - discount / 100);
 
-            Console.WriteLine("Сума: " + sum.ToString("F2") + " грн");
+            Console.WriteLine("Total cost: " + sum);
         }
     }
 }
-

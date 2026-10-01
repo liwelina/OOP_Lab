@@ -14,7 +14,7 @@ namespace Lab01
             height = height / 100;
 
            double bmi = weight / (height * height);
-            Console.WriteLine("Body Mass Index: " + bmi.ToString("F2"));
+            Console.WriteLine("Body Mass Index: " + bmi);
         }
     }
-}  
+}

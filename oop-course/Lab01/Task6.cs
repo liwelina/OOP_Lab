@@ -44,5 +44,3 @@ namespace Lab01
         }
     }
 }
-
-
