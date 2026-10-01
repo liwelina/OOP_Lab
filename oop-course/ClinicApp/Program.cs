@@ -79,6 +79,9 @@ internal class Program
             doctor3.Id,
             DateTime.Now.AddDays(3).Date.AddHours(14));
 
+        string patientName = clinic.Patients.FindById(99)?.FullName ?? "не знайдено";
+        Console.WriteLine($"Patient with ID 99: {patientName}");
+
         bool running = true;
 
         while (running)
@@ -131,7 +134,7 @@ internal class Program
                     Speciality specialityValue = (Speciality)selectedSpeciality;
 
                     Doctor[] doctors = clinic.Doctors.FindBySpeciality(
-                        specialityValue.ToString());
+                        specialityValue);
 
                     if (doctors.Length == 0)
                     {

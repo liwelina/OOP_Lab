@@ -4,12 +4,14 @@ public class AppointmentManager
 {
     private const int MaxAppointments = 500;
     private Appointment[] _appointments = new Appointment[MaxAppointments];
-    private int _count = 0;
 
     private PatientManager _patients;
     private DoctorManager _doctors;
 
+    private int _count = 0;
+
     public int Count => _count;
+
     public Appointment? this[int index]
     {
         get
@@ -38,6 +40,7 @@ public class AppointmentManager
                 return _appointments[i];
             }
         }
+
         return null;
     }
 
@@ -50,6 +53,7 @@ public class AppointmentManager
         }
 
         var patient = _patients.FindById(patientId);
+
         if (patient == null)
         {
             Console.WriteLine($"Error: patient with ID {patientId} not found.");
@@ -57,6 +61,7 @@ public class AppointmentManager
         }
 
         var doctor = _doctors.FindById(doctorId);
+
         if (doctor == null)
         {
             Console.WriteLine($"Error: doctor with ID {doctorId} not found.");
@@ -64,16 +69,19 @@ public class AppointmentManager
         }
 
         var app = new Appointment(patientId, doctorId, scheduledAt, durationMinutes);
+
         _appointments[_count] = app;
         _count++;
 
         Console.WriteLine($"Record [{app.Id}] created: {patient.FullName} > {doctor.FullName} î {scheduledAt:dd.MM.yyyy HH:mm}");
+
         return true;
     }
 
     public bool Cancel(int id, string reason = "")
     {
         var app = FindById(id);
+
         if (app == null)
         {
             Console.WriteLine($"Error: record with ID {id} not found.");
@@ -81,20 +89,23 @@ public class AppointmentManager
         }
 
         bool result = app.Cancel(reason);
+
         if (result)
         {
-            Console.WriteLine($"Record [{{id}}] has been cancelled.");
+            Console.WriteLine($"Record [{id}] has been cancelled.");
         }
         else
         {
             Console.WriteLine($"Failed to cancel record [{id}] (current status: {app.Status}).");
         }
+
         return result;
     }
 
     public bool Complete(int id)
     {
         var app = FindById(id);
+
         if (app == null)
         {
             Console.WriteLine($"Error: record with ID {id} not found.");
@@ -102,20 +113,23 @@ public class AppointmentManager
         }
 
         bool result = app.Complete();
+
         if (result)
         {
-            Console.WriteLine($"Record [{id}] completed..");
+            Console.WriteLine($"Record [{id}] completed.");
         }
         else
         {
             Console.WriteLine($"Failed to complete record [{id}] (current status {app.Status}).");
         }
+
         return result;
     }
 
     public Appointment[] GetByPatient(int patientId)
     {
         int matches = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_appointments[i].PatientId == patientId)
@@ -125,20 +139,23 @@ public class AppointmentManager
         }
 
         Appointment[] result = new Appointment[matches];
-        int idx = 0;
+        int index = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_appointments[i].PatientId == patientId)
             {
-                result[idx++] = _appointments[i];
+                result[index++] = _appointments[i];
             }
         }
+
         return result;
     }
 
     public Appointment[] GetByDoctor(int doctorId)
     {
         int matches = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_appointments[i].DoctorId == doctorId)
@@ -148,20 +165,23 @@ public class AppointmentManager
         }
 
         Appointment[] result = new Appointment[matches];
-        int idx = 0;
+        int index = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_appointments[i].DoctorId == doctorId)
             {
-                result[idx++] = _appointments[i];
+                result[index++] = _appointments[i];
             }
         }
+
         return result;
     }
 
     public Appointment[] GetByDate(DateTime date)
     {
         int matches = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_appointments[i].ScheduledAt.Date == date.Date)
@@ -171,20 +191,28 @@ public class AppointmentManager
         }
 
         Appointment[] result = new Appointment[matches];
-        int idx = 0;
+        int index = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_appointments[i].ScheduledAt.Date == date.Date)
             {
-                result[idx++] = _appointments[i];
+                result[index++] = _appointments[i];
             }
         }
+
         return result;
+    }
+
+    public Appointment[] GetByDate(int year, int month, int day)
+    {
+        return GetByDate(new DateTime(year, month, day));
     }
 
     public Appointment[] GetUpcoming()
     {
         int matches = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_appointments[i].IsUpcoming)
@@ -194,14 +222,16 @@ public class AppointmentManager
         }
 
         Appointment[] result = new Appointment[matches];
-        int idx = 0;
+        int index = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_appointments[i].IsUpcoming)
             {
-                result[idx++] = _appointments[i];
+                result[index++] = _appointments[i];
             }
         }
+
         return result;
     }
 
@@ -214,10 +244,12 @@ public class AppointmentManager
         string doctorName = doctor != null ? doctor.FullName : $"Doctor #{app.DoctorId}";
 
         string line = $"[{app.Id}] {patientName} > {doctorName} | {app.ScheduledAt:dd.MM.yyyy HH:mm}–{app.EndsAt:HH:mm} | {app.Status}";
+
         if (app.Notes.Length > 0)
         {
             line += $" | {app.Notes}";
         }
+
         Console.WriteLine(line);
     }
 

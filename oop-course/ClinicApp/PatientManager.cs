@@ -7,6 +7,7 @@ public class PatientManager
     private int _count = 0;
 
     public int Count => _count;
+
     public Patient? this[int index]
     {
         get
@@ -30,6 +31,7 @@ public class PatientManager
 
         _patients[_count] = patient;
         _count++;
+
         Console.WriteLine($"Patient [{patient.Id}] {patient.FullName} add.");
     }
 
@@ -42,7 +44,22 @@ public class PatientManager
                 return _patients[i];
             }
         }
+
         return null;
+    }
+
+    public bool TryFindById(int id, out Patient patient)
+    {
+        Patient? foundPatient = FindById(id);
+
+        if (foundPatient != null)
+        {
+            patient = foundPatient;
+            return true;
+        }
+
+        patient = null!;
+        return false;
     }
 
     public Patient[] FindByName(string name)
@@ -66,6 +83,32 @@ public class PatientManager
         {
             if (_patients[i].FirstName.ToLower().Contains(query) ||
                 _patients[i].LastName.ToLower().Contains(query))
+            {
+                result[index++] = _patients[i];
+            }
+        }
+
+        return result;
+    }
+
+    public Patient[] FindByBloodType(BloodType bloodType)
+    {
+        int matchesCount = 0;
+
+        for (int i = 0; i < _count; i++)
+        {
+            if (_patients[i].BloodType == bloodType)
+            {
+                matchesCount++;
+            }
+        }
+
+        Patient[] result = new Patient[matchesCount];
+        int index = 0;
+
+        for (int i = 0; i < _count; i++)
+        {
+            if (_patients[i].BloodType == bloodType)
             {
                 result[index++] = _patients[i];
             }
@@ -99,6 +142,7 @@ public class PatientManager
 
         _patients[_count - 1] = null!;
         _count--;
+
         return true;
     }
 
@@ -111,10 +155,12 @@ public class PatientManager
         }
 
         Console.WriteLine($"=== Patients ({_count} / {MaxPatients}) ===");
+
         for (int i = 0; i < _count; i++)
         {
             Console.WriteLine(_patients[i]);
         }
+
         Console.WriteLine(new string('-', 60));
     }
 

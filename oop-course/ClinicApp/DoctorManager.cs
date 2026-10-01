@@ -7,6 +7,7 @@ public class DoctorManager
     private int _count = 0;
 
     public int Count => _count;
+
     public Doctor? this[int index]
     {
         get
@@ -42,6 +43,7 @@ public class DoctorManager
                 return _doctors[i];
             }
         }
+
         return null;
     }
 
@@ -64,6 +66,32 @@ public class DoctorManager
         for (int i = 0; i < _count; i++)
         {
             if (_doctors[i].Speciality.ToString().ToLower().Contains(query))
+            {
+                result[index++] = _doctors[i];
+            }
+        }
+
+        return result;
+    }
+
+    public Doctor[] FindBySpeciality(Speciality speciality)
+    {
+        int matchesCount = 0;
+
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Speciality == speciality)
+            {
+                matchesCount++;
+            }
+        }
+
+        Doctor[] result = new Doctor[matchesCount];
+        int index = 0;
+
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Speciality == speciality)
             {
                 result[index++] = _doctors[i];
             }
@@ -116,10 +144,12 @@ public class DoctorManager
         }
 
         Console.WriteLine($"=== Doctors ({_count} / {MaxDoctors}) ===");
+
         for (int i = 0; i < _count; i++)
         {
             Console.WriteLine(_doctors[i]);
         }
+
         Console.WriteLine(new string('-', 60));
     }
 
@@ -132,6 +162,7 @@ public class DoctorManager
         }
 
         int availableCount = 0;
+
         for (int i = 0; i < _count; i++)
         {
             if (_doctors[i].IsAvailableNow)
@@ -148,6 +179,7 @@ public class DoctorManager
         for (int i = 0; i < _count; i++)
         {
             bool isUnique = true;
+
             for (int j = 0; j < i; j++)
             {
                 if (_doctors[i].Speciality == _doctors[j].Speciality)
@@ -160,6 +192,7 @@ public class DoctorManager
             if (isUnique)
             {
                 int countForSpeciality = 0;
+
                 for (int k = 0; k < _count; k++)
                 {
                     if (_doctors[i].Speciality == _doctors[k].Speciality)
@@ -174,5 +207,18 @@ public class DoctorManager
 
         Console.WriteLine("==========================");
     }
-}
 
+    public bool TryFindById(int id, out Doctor doctor)
+    {
+        Doctor? foundDoctor = FindById(id);
+
+        if (foundDoctor != null)
+        {
+            doctor = foundDoctor;
+            return true;
+        }
+
+        doctor = null!;
+        return false;
+    }
+}
