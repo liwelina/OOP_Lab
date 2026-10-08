@@ -1,4 +1,7 @@
-namespace ClinicApp;
+using ClinicApp.Utils;
+using ClinicApp.Enums;
+
+namespace ClinicApp.Models;
 
 public class Doctor
 {
