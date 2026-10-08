@@ -7,27 +7,48 @@ public class Patient
 {
     private static int _nextId = 1;
 
-    public int Id { get; }
+    public int Id { get; private set; }
 
     private string _firstName = "";
     public string FirstName
     {
         get => _firstName;
-        set => _firstName = value;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length > 50)
+            {
+                throw new ArgumentException("First name cannot be empty or exceed 50 characters.", nameof(FirstName));
+            }
+            _firstName = value;
+        }
     }
 
     private string _lastName = "";
     public string LastName
     {
         get => _lastName;
-        set => _lastName = value;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length > 50)
+            {
+                throw new ArgumentException("Last name cannot be empty or exceed 50 characters.", nameof(LastName));
+            }
+            _lastName = value;
+        }
     }
 
     private DateTime _dateOfBirth;
     public DateTime DateOfBirth
     {
         get => _dateOfBirth;
-        set => _dateOfBirth = value;
+        set
+        {
+            if (value > DateTime.Today || value.Year < 1900)
+            {
+                throw new ArgumentOutOfRangeException(nameof(DateOfBirth), "Date of birth cannot be in the future or earlier than year 1900.");
+            }
+            _dateOfBirth = value;
+        }
     }
 
     public BloodType BloodType { get; set; }
@@ -36,7 +57,23 @@ public class Patient
     public string Phone
     {
         get => _phone;
-        set => _phone = value;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length != 10)
+            {
+                throw new ArgumentException("Phone number must contain exactly 10 digits.", nameof(Phone));
+            }
+
+            foreach (char c in value)
+            {
+                if (!char.IsDigit(c))
+                {
+                    throw new ArgumentException("Phone number must contain only digits.", nameof(Phone));
+                }
+            }
+
+            _phone = value;
+        }
     }
 
     public string Email { get; set; }
@@ -72,13 +109,13 @@ public class Patient
 
     public Patient(string firstName, string lastName, DateTime dob, BloodType bloodType, string phone, string email = "")
     {
-        Id = _nextId++;
         FirstName = firstName;
         LastName = lastName;
         DateOfBirth = dob;
         BloodType = bloodType;
         Phone = phone;
         Email = email;
+        Id = _nextId++;
     }
 
     public string GetAgeCategory()

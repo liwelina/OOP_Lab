@@ -7,20 +7,34 @@ public class Doctor
 {
     private static int _nextId = 1;
 
-    public int Id { get; }
+    public int Id { get; private set; }
 
     private string _firstName = "";
     public string FirstName
     {
         get => _firstName;
-        set => _firstName = value;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length > 50)
+            {
+                throw new ArgumentException("First name cannot be empty or exceed 50 characters.", nameof(FirstName));
+            }
+            _firstName = value;
+        }
     }
 
     private string _lastName = "";
     public string LastName
     {
         get => _lastName;
-        set => _lastName = value;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length > 50)
+            {
+                throw new ArgumentException("Last name cannot be empty or exceed 50 characters.", nameof(LastName));
+            }
+            _lastName = value;
+        }
     }
 
     public Speciality Speciality { get; set; }
@@ -29,14 +43,37 @@ public class Doctor
     public string LicenseNumber
     {
         get => _licenseNumber;
-        set => _licenseNumber = value;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("License number cannot be empty or whitespace.", nameof(LicenseNumber));
+            }
+            _licenseNumber = value;
+        }
     }
 
     private string _phone = "";
     public string Phone
     {
         get => _phone;
-        set => _phone = value;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length != 10)
+            {
+                throw new ArgumentException("Phone number must contain exactly 10 digits.", nameof(Phone));
+            }
+
+            foreach (char c in value)
+            {
+                if (!char.IsDigit(c))
+                {
+                    throw new ArgumentException("Phone number must contain only digits.", nameof(Phone));
+                }
+            }
+
+            _phone = value;
+        }
     }
 
     public WorkSchedule Schedule { get; set; }
@@ -60,13 +97,13 @@ public class Doctor
 
     public Doctor(string firstName, string lastName, Speciality speciality, string licenseNumber, string phone)
     {
-        Id = _nextId++;
         FirstName = firstName;
         LastName = lastName;
         Speciality = speciality;
         LicenseNumber = licenseNumber;
         Phone = phone;
         Schedule = new WorkSchedule(8, 17);
+        Id = _nextId++;
     }
 
     public bool CanAcceptAt(int hour)
