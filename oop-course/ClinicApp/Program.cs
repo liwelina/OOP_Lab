@@ -1,4 +1,9 @@
 using System.Text;
+using ClinicApp;
+using ClinicApp.Enums;
+using ClinicApp.Managers;
+using ClinicApp.Models;
+using ClinicApp.Utils;
 
 namespace ClinicApp;
 
@@ -151,77 +156,101 @@ internal class Program
                     break;
 
                 case 5:
-                    Console.Write("First name: ");
-                    string firstName = Console.ReadLine()!;
-
-                    Console.Write("Last name: ");
-                    string lastName = Console.ReadLine()!;
-
-                    Console.Write("Phone: ");
-                    string phone = Console.ReadLine()!;
-
-                    Console.WriteLine("=== Blood types ===");
-
-                    int bloodTypeNumber = 0;
-
-                    foreach (BloodType bloodType in Enum.GetValues<BloodType>())
+                    try
                     {
-                        Console.WriteLine($"{bloodTypeNumber}. {bloodType}");
-                        bloodTypeNumber++;
+                        Console.Write("First name: ");
+                        string firstName = Console.ReadLine()!;
+
+                        Console.Write("Last name: ");
+                        string lastName = Console.ReadLine()!;
+
+                        Console.Write("Phone: ");
+                        string phone = Console.ReadLine()!;
+
+                        Console.WriteLine("=== Blood types ===");
+
+                        int bloodTypeNumber = 0;
+
+                        foreach (BloodType bloodType in Enum.GetValues<BloodType>())
+                        {
+                            Console.WriteLine($"{bloodTypeNumber}. {bloodType}");
+                            bloodTypeNumber++;
+                        }
+
+                        Console.Write("Choose blood type number: ");
+                        int selectedBloodType = int.Parse(Console.ReadLine()!);
+
+                        BloodType bloodTypeValue = (BloodType)selectedBloodType;
+
+                        Patient newPatient = new Patient(
+                            firstName,
+                            lastName,
+                            DateTime.Today.AddYears(-25),
+                            bloodTypeValue,
+                            phone);
+
+                        clinic.Patients.Add(newPatient);
+                        Console.WriteLine("Patient added successfully!");
                     }
-
-                    Console.Write("Choose blood type number: ");
-                    int selectedBloodType = int.Parse(Console.ReadLine()!);
-
-                    BloodType bloodTypeValue = (BloodType)selectedBloodType;
-
-                    Patient newPatient = new Patient(
-                        firstName,
-                        lastName,
-                        DateTime.Today.AddYears(-25),
-                        bloodTypeValue,
-                        phone);
-
-                    clinic.Patients.Add(newPatient);
+                    catch (ArgumentOutOfRangeException ex)
+                    {
+                        Console.WriteLine($"Помилка значення (діапазон): {ex.Message}");
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        Console.WriteLine($"Помилка валідації: {ex.Message}");
+                    }
                     break;
 
                 case 6:
-                    Console.Write("First name: ");
-                    string doctorFirstName = Console.ReadLine()!;
-
-                    Console.Write("Last name: ");
-                    string doctorLastName = Console.ReadLine()!;
-
-                    Console.Write("License number: ");
-                    string licenseNumber = Console.ReadLine()!;
-
-                    Console.Write("Phone: ");
-                    string doctorPhone = Console.ReadLine()!;
-
-                    Console.WriteLine("=== Specialities ===");
-
-                    int doctorSpecialityNumber = 0;
-
-                    foreach (Speciality speciality in Enum.GetValues<Speciality>())
+                    try
                     {
-                        Console.WriteLine($"{doctorSpecialityNumber}. {speciality}");
-                        doctorSpecialityNumber++;
+                        Console.Write("First name: ");
+                        string doctorFirstName = Console.ReadLine()!;
+
+                        Console.Write("Last name: ");
+                        string doctorLastName = Console.ReadLine()!;
+
+                        Console.Write("License number: ");
+                        string licenseNumber = Console.ReadLine()!;
+
+                        Console.Write("Phone: ");
+                        string doctorPhone = Console.ReadLine()!;
+
+                        Console.WriteLine("=== Specialities ===");
+
+                        int doctorSpecialityNumber = 0;
+
+                        foreach (Speciality speciality in Enum.GetValues<Speciality>())
+                        {
+                            Console.WriteLine($"{doctorSpecialityNumber}. {speciality}");
+                            doctorSpecialityNumber++;
+                        }
+
+                        Console.Write("Choose speciality number: ");
+                        int doctorSelectedSpeciality = int.Parse(Console.ReadLine()!);
+
+                        Speciality doctorSpecialityValue =
+                            (Speciality)doctorSelectedSpeciality;
+
+                        Doctor newDoctor = new Doctor(
+                            doctorFirstName,
+                            doctorLastName,
+                            doctorSpecialityValue,
+                            licenseNumber,
+                            doctorPhone);
+
+                        clinic.Doctors.Add(newDoctor);
+                        Console.WriteLine("Doctor added successfully!");
                     }
-
-                    Console.Write("Choose speciality number: ");
-                    int doctorSelectedSpeciality = int.Parse(Console.ReadLine()!);
-
-                    Speciality doctorSpecialityValue =
-                        (Speciality)doctorSelectedSpeciality;
-
-                    Doctor newDoctor = new Doctor(
-                        doctorFirstName,
-                        doctorLastName,
-                        doctorSpecialityValue,
-                        licenseNumber,
-                        doctorPhone);
-
-                    clinic.Doctors.Add(newDoctor);
+                    catch (ArgumentOutOfRangeException ex)
+                    {
+                        Console.WriteLine($"Помилка значення (діапазон): {ex.Message}");
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        Console.WriteLine($"Помилка валідації: {ex.Message}");
+                    }
                     break;
 
                 case 7:

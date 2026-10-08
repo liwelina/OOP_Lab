@@ -1,3 +1,8 @@
+using ClinicApp.Enums;
+using ClinicApp.Managers;
+using ClinicApp.Models;
+using ClinicApp.Utils;
+
 namespace ClinicApp;
 
 public class Clinic

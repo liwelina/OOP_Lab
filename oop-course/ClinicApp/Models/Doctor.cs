@@ -1,15 +1,63 @@
-namespace ClinicApp;
+using ClinicApp.Utils;
+using ClinicApp.Enums;
+
+namespace ClinicApp.Models;
 
 public class Doctor
 {
     private static int _nextId = 1;
 
-    public int Id { get; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
+    public int Id { get; private set; }
+
+    private string _firstName = "";
+    public string FirstName
+    {
+        get => _firstName;
+        set
+        {
+            ClinicValidator.ValidateName(value, nameof(FirstName));
+            _firstName = value;
+        }
+    }
+
+    private string _lastName = "";
+    public string LastName
+    {
+        get => _lastName;
+        set
+        {
+            ClinicValidator.ValidateName(value, nameof(LastName));
+            _lastName = value;
+        }
+    }
+
     public Speciality Speciality { get; set; }
-    public string LicenseNumber { get; set; }
-    public string Phone { get; set; }
+
+    private string _licenseNumber = "";
+    public string LicenseNumber
+    {
+        get => _licenseNumber;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("License number cannot be empty or whitespace.", nameof(LicenseNumber));
+            }
+            _licenseNumber = value;
+        }
+    }
+
+    private string _phone = "";
+    public string Phone
+    {
+        get => _phone;
+        set
+        {
+            ClinicValidator.ValidatePhone(value);
+            _phone = value;
+        }
+    }
+
     public WorkSchedule Schedule { get; set; }
 
     public string FullName => $"{FirstName} {LastName}";
@@ -31,13 +79,13 @@ public class Doctor
 
     public Doctor(string firstName, string lastName, Speciality speciality, string licenseNumber, string phone)
     {
-        Id = _nextId++;
         FirstName = firstName;
         LastName = lastName;
         Speciality = speciality;
         LicenseNumber = licenseNumber;
         Phone = phone;
         Schedule = new WorkSchedule(8, 17);
+        Id = _nextId++;
     }
 
     public bool CanAcceptAt(int hour)
