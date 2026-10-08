@@ -15,10 +15,7 @@ public class Patient
         get => _firstName;
         set
         {
-            if (string.IsNullOrWhiteSpace(value) || value.Length > 50)
-            {
-                throw new ArgumentException("First name cannot be empty or exceed 50 characters.", nameof(FirstName));
-            }
+            ClinicValidator.ValidateName(value, nameof(FirstName));
             _firstName = value;
         }
     }
@@ -29,10 +26,7 @@ public class Patient
         get => _lastName;
         set
         {
-            if (string.IsNullOrWhiteSpace(value) || value.Length > 50)
-            {
-                throw new ArgumentException("Last name cannot be empty or exceed 50 characters.", nameof(LastName));
-            }
+            ClinicValidator.ValidateName(value, nameof(LastName));
             _lastName = value;
         }
     }
@@ -43,10 +37,7 @@ public class Patient
         get => _dateOfBirth;
         set
         {
-            if (value > DateTime.Today || value.Year < 1900)
-            {
-                throw new ArgumentOutOfRangeException(nameof(DateOfBirth), "Date of birth cannot be in the future or earlier than year 1900.");
-            }
+            ClinicValidator.ValidateDate(value, nameof(DateOfBirth));
             _dateOfBirth = value;
         }
     }
@@ -59,19 +50,7 @@ public class Patient
         get => _phone;
         set
         {
-            if (string.IsNullOrWhiteSpace(value) || value.Length != 10)
-            {
-                throw new ArgumentException("Phone number must contain exactly 10 digits.", nameof(Phone));
-            }
-
-            foreach (char c in value)
-            {
-                if (!char.IsDigit(c))
-                {
-                    throw new ArgumentException("Phone number must contain only digits.", nameof(Phone));
-                }
-            }
-
+            ClinicValidator.ValidatePhone(value);
             _phone = value;
         }
     }
@@ -139,4 +118,3 @@ public class Patient
         return $"[{Id}] {FullName} | Age: {ClinicFormatter.FormatAge(Age)} ({GetAgeCategory()}) | Blood: {ClinicFormatter.FormatBloodType(BloodType)} | Phone: {ClinicFormatter.FormatPhone(Phone)}";
     }
 }
-
