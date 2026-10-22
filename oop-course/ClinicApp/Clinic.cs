@@ -11,7 +11,7 @@ public class Clinic
     public PatientManager Patients { get; }
     public DoctorManager Doctors { get; }
     public AppointmentManager Appointments { get; }
-    public BillingManager Billing { get; } // Додано для роботи з фінансами та неоплаченими записами
+    public BillingManager Billing { get; } 
 
     public Clinic(string name)
     {
@@ -19,7 +19,7 @@ public class Clinic
         Patients = new PatientManager();
         Doctors = new DoctorManager();
         Appointments = new AppointmentManager(Patients, Doctors);
-        Billing = new BillingManager(Appointments); // Ініціалізація BillingManager
+        Billing = new BillingManager(Appointments); 
     }
 
     public void DisplaySchedule(DateTime date)
@@ -61,4 +61,3 @@ public class Clinic
         Console.WriteLine("L==============================================-");
     }
 }
-
