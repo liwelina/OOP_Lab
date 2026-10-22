@@ -1,272 +1,284 @@
 using ClinicApp.Enums;
 using ClinicApp.Models;
 
-namespace ClinicApp.Managers;
-
-public class AppointmentManager
+namespace ClinicApp.Managers
 {
-    private const int MaxAppointments = 500;
-    private Appointment[] _appointments = new Appointment[MaxAppointments];
-
-    private PatientManager _patients;
-    private DoctorManager _doctors;
-
-    private int _count = 0;
-
-    public int Count => _count;
-
-    public Appointment? this[int index]
+    public class AppointmentManager
     {
-        get
+        private const int MaxAppointments = 500;
+        private Appointment[] _appointments = new Appointment[MaxAppointments];
+
+        private PatientManager _patients;
+        private DoctorManager _doctors;
+
+        private int _count = 0;
+
+        public int Count => _count;
+
+        public Appointment? this[int index]
         {
-            if (index < 0 || index >= _count)
+            get
             {
-                return null;
-            }
+                if (index < 0 || index >= _count)
+                {
+                    return null;
+                }
 
-            return _appointments[index];
-        }
-    }
-
-    public AppointmentManager(PatientManager patients, DoctorManager doctors)
-    {
-        _patients = patients;
-        _doctors = doctors;
-    }
-
-    private Appointment? FindById(int id)
-    {
-        for (int i = 0; i < _count; i++)
-        {
-            if (_appointments[i].Id == id)
-            {
-                return _appointments[i];
+                return _appointments[index];
             }
         }
 
-        return null;
-    }
-
-    public bool Book(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
-    {
-        if (_count >= MaxAppointments)
+        public AppointmentManager(PatientManager patients, DoctorManager doctors)
         {
-            Console.WriteLine("Error: record limit reached.");
-            return false;
+            _patients = patients;
+            _doctors = doctors;
         }
 
-        var patient = _patients.FindById(patientId);
-
-        if (patient == null)
+        private Appointment? FindById(int id)
         {
-            Console.WriteLine($"Error: patient with ID {patientId} not found.");
-            return false;
-        }
-
-        var doctor = _doctors.FindById(doctorId);
-
-        if (doctor == null)
-        {
-            Console.WriteLine($"Error: doctor with ID {doctorId} not found.");
-            return false;
-        }
-
-        var app = new Appointment(patientId, doctorId, scheduledAt, durationMinutes);
-
-        _appointments[_count] = app;
-        _count++;
-
-        Console.WriteLine($"Record [{app.Id}] created: {patient.FullName} > {doctor.FullName} о {scheduledAt:dd.MM.yyyy HH:mm}");
-
-        return true;
-    }
-
-    public bool Cancel(int id, string reason = "")
-    {
-        var app = FindById(id);
-
-        if (app == null)
-        {
-            Console.WriteLine($"Error: record with ID {id} not found.");
-            return false;
-        }
-
-        bool result = app.Cancel(reason);
-
-        if (result)
-        {
-            Console.WriteLine($"Record [{id}] has been cancelled.");
-        }
-        else
-        {
-            Console.WriteLine($"Failed to cancel record [{id}] (current status: {app.Status}).");
-        }
-
-        return result;
-    }
-
-    public bool Complete(int id)
-    {
-        var app = FindById(id);
-
-        if (app == null)
-        {
-            Console.WriteLine($"Error: record with ID {id} not found.");
-            return false;
-        }
-
-        bool result = app.Complete();
-
-        if (result)
-        {
-            Console.WriteLine($"Record [{id}] completed.");
-        }
-        else
-        {
-            Console.WriteLine($"Failed to complete record [{id}] (current status {app.Status}).");
-        }
-
-        return result;
-    }
-
-    public Appointment[] GetByPatient(int patientId)
-    {
-        int matches = 0;
-
-        for (int i = 0; i < _count; i++)
-        {
-            if (_appointments[i].PatientId == patientId)
+            for (int i = 0; i < _count; i++)
             {
-                matches++;
+                if (_appointments[i].Id == id)
+                {
+                    return _appointments[i];
+                }
             }
+
+            return null;
         }
 
-        Appointment[] result = new Appointment[matches];
-        int index = 0;
-
-        for (int i = 0; i < _count; i++)
+        // Ќовий метод: повертаЇ коп≥ю вс≥х запис≥в у новому масив≥
+        public Appointment[] GetAll()
         {
-            if (_appointments[i].PatientId == patientId)
+            Appointment[] copy = new Appointment[_count];
+            for (int i = 0; i < _count; i++)
             {
-                result[index++] = _appointments[i];
+                copy[i] = _appointments[i];
             }
+            return copy;
         }
 
-        return result;
-    }
-
-    public Appointment[] GetByDoctor(int doctorId)
-    {
-        int matches = 0;
-
-        for (int i = 0; i < _count; i++)
+        public bool Book(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
         {
-            if (_appointments[i].DoctorId == doctorId)
+            if (_count >= MaxAppointments)
             {
-                matches++;
+                Console.WriteLine("Error: record limit reached.");
+                return false;
             }
-        }
 
-        Appointment[] result = new Appointment[matches];
-        int index = 0;
+            var patient = _patients.FindById(patientId);
 
-        for (int i = 0; i < _count; i++)
-        {
-            if (_appointments[i].DoctorId == doctorId)
+            if (patient == null)
             {
-                result[index++] = _appointments[i];
+                Console.WriteLine($"Error: patient with ID {patientId} not found.");
+                return false;
             }
-        }
 
-        return result;
-    }
+            var doctor = _doctors.FindById(doctorId);
 
-    public Appointment[] GetByDate(DateTime date)
-    {
-        int matches = 0;
-
-        for (int i = 0; i < _count; i++)
-        {
-            if (_appointments[i].ScheduledAt.Date == date.Date)
+            if (doctor == null)
             {
-                matches++;
+                Console.WriteLine($"Error: doctor with ID {doctorId} not found.");
+                return false;
             }
+
+            var app = new Appointment(patientId, doctorId, scheduledAt, durationMinutes);
+
+            _appointments[_count] = app;
+            _count++;
+
+            Console.WriteLine($"Record [{app.Id}] created: {patient.FullName} > {doctor.FullName} о {scheduledAt:dd.MM.yyyy HH:mm}");
+
+            return true;
         }
 
-        Appointment[] result = new Appointment[matches];
-        int index = 0;
-
-        for (int i = 0; i < _count; i++)
+        public bool Cancel(int id, string reason = "")
         {
-            if (_appointments[i].ScheduledAt.Date == date.Date)
+            var app = FindById(id);
+
+            if (app == null)
             {
-                result[index++] = _appointments[i];
+                Console.WriteLine($"Error: record with ID {id} not found.");
+                return false;
             }
-        }
 
-        return result;
-    }
+            bool result = app.Cancel(reason);
 
-    public Appointment[] GetByDate(int year, int month, int day)
-    {
-        return GetByDate(new DateTime(year, month, day));
-    }
-
-    public Appointment[] GetUpcoming()
-    {
-        int matches = 0;
-
-        for (int i = 0; i < _count; i++)
-        {
-            if (_appointments[i].IsUpcoming)
+            if (result)
             {
-                matches++;
+                Console.WriteLine($"Record [{id}] has been cancelled.");
             }
-        }
-
-        Appointment[] result = new Appointment[matches];
-        int index = 0;
-
-        for (int i = 0; i < _count; i++)
-        {
-            if (_appointments[i].IsUpcoming)
+            else
             {
-                result[index++] = _appointments[i];
+                Console.WriteLine($"Failed to cancel record [{id}] (current status: {app.Status}).");
             }
+
+            return result;
         }
 
-        return result;
-    }
-
-    public void DisplayAppointment(Appointment app)
-    {
-        var patient = _patients.FindById(app.PatientId);
-        var doctor = _doctors.FindById(app.DoctorId);
-
-        string patientName = patient != null ? patient.FullName : $"Patient #{app.PatientId}";
-        string doctorName = doctor != null ? doctor.FullName : $"Doctor #{app.DoctorId}";
-
-        string line = $"[{app.Id}] {patientName} > {doctorName} | {app.ScheduledAt:dd.MM.yyyy HH:mm}Ц{app.EndsAt:HH:mm} | {app.Status}";
-
-        if (app.Notes.Length > 0)
+        public bool Complete(int id)
         {
-            line += $" | {app.Notes}";
+            var app = FindById(id);
+
+            if (app == null)
+            {
+                Console.WriteLine($"Error: record with ID {id} not found.");
+                return false;
+            }
+
+            bool result = app.Complete();
+
+            if (result)
+            {
+                Console.WriteLine($"Record [{id}] completed.");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to complete record [{id}] (current status {app.Status}).");
+            }
+
+            return result;
         }
 
-        Console.WriteLine(line);
-    }
-
-    public void DisplayList(Appointment[] list)
-    {
-        if (list.Length == 0)
+        public Appointment[] GetByPatient(int patientId)
         {
-            Console.WriteLine("No records found.");
-            return;
+            int matches = 0;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i].PatientId == patientId)
+                {
+                    matches++;
+                }
+            }
+
+            Appointment[] result = new Appointment[matches];
+            int index = 0;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i].PatientId == patientId)
+                {
+                    result[index++] = _appointments[i];
+                }
+            }
+
+            return result;
         }
 
-        foreach (var app in list)
+        public Appointment[] GetByDoctor(int doctorId)
         {
-            DisplayAppointment(app);
+            int matches = 0;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i].DoctorId == doctorId)
+                {
+                    matches++;
+                }
+            }
+
+            Appointment[] result = new Appointment[matches];
+            int index = 0;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i].DoctorId == doctorId)
+                {
+                    result[index++] = _appointments[i];
+                }
+            }
+
+            return result;
+        }
+
+        public Appointment[] GetByDate(DateTime date)
+        {
+            int matches = 0;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i].ScheduledAt.Date == date.Date)
+                {
+                    matches++;
+                }
+            }
+
+            Appointment[] result = new Appointment[matches];
+            int index = 0;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i].ScheduledAt.Date == date.Date)
+                {
+                    result[index++] = _appointments[i];
+                }
+            }
+
+            return result;
+        }
+
+        public Appointment[] GetByDate(int year, int month, int day)
+        {
+            return GetByDate(new DateTime(year, month, day));
+        }
+
+        public Appointment[] GetUpcoming()
+        {
+            int matches = 0;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i].IsUpcoming)
+                {
+                    matches++;
+                }
+            }
+
+            Appointment[] result = new Appointment[matches];
+            int index = 0;
+
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i].IsUpcoming)
+                {
+                    result[index++] = _appointments[i];
+                }
+            }
+
+            return result;
+        }
+
+        public void DisplayAppointment(Appointment app)
+        {
+            var patient = _patients.FindById(app.PatientId);
+            var doctor = _doctors.FindById(app.DoctorId);
+
+            string patientName = patient != null ? patient.FullName : $"Patient #{app.PatientId}";
+            string doctorName = doctor != null ? doctor.FullName : $"Doctor #{app.DoctorId}";
+
+            string line = $"[{app.Id}] {patientName} > {doctorName} | {app.ScheduledAt:dd.MM.yyyy HH:mm}Ц{app.EndsAt:HH:mm} | {app.Status}";
+
+            if (app.Notes.Length > 0)
+            {
+                line += $" | {app.Notes}";
+            }
+
+            Console.WriteLine(line);
+        }
+
+        public void DisplayList(Appointment[] list)
+        {
+            if (list.Length == 0)
+            {
+                Console.WriteLine("No records found.");
+                return;
+            }
+
+            foreach (var app in list)
+            {
+                DisplayAppointment(app);
+            }
         }
     }
 }
