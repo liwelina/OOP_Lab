@@ -1,4 +1,5 @@
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Models;
 
 namespace ClinicApp.Managers
@@ -47,7 +48,6 @@ namespace ClinicApp.Managers
             return null;
         }
 
-        // Новий метод: повертає копію всіх записів у новому масиві
         public Appointment[] GetAll()
         {
             Appointment[] copy = new Appointment[_count];
@@ -56,6 +56,19 @@ namespace ClinicApp.Managers
                 copy[i] = _appointments[i];
             }
             return copy;
+        }
+
+        public static int CancelAll(ICancellable[] items, string reason = "")
+        {
+            int cancelledCount = 0;
+            foreach (var item in items)
+            {
+                if (item.Cancel(reason))
+                {
+                    cancelledCount++;
+                }
+            }
+            return cancelledCount;
         }
 
         public bool Book(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
@@ -282,4 +295,3 @@ namespace ClinicApp.Managers
         }
     }
 }
-

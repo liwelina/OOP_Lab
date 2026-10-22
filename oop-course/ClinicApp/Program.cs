@@ -1,7 +1,7 @@
 using System.Text;
 using ClinicApp;
 using ClinicApp.Enums;
-using ClinicApp.Interfaces; // Додано для IPayable
+using ClinicApp.Interfaces;
 using ClinicApp.Managers;
 using ClinicApp.Models;
 using ClinicApp.Utils;
@@ -85,19 +85,16 @@ namespace ClinicApp
                 doctor3.Id,
                 DateTime.Now.AddDays(3).Date.AddHours(14));
 
-            // ==========================================
-            // Тимчасова перевірка Задачі 1 (роботу інтерфейсу)
-            // ==========================================
-            Console.WriteLine("\n--- Тимчасова перевірка IPayable ---");
-            Appointment testApp = new Appointment(patient1.Id, doctor1.Id, DateTime.Today.AddDays(1).AddHours(10), 45);
-            Console.WriteLine($"Вартість (45 хв): {testApp.GetCost()}");   // Очікується: 450
-            Console.WriteLine($"Чи оплачено: {testApp.IsPaid}");        // Очікується: False
-            testApp.MarkPaid();
-            Console.WriteLine($"Чи оплачено після MarkPaid: {testApp.IsPaid}"); // Очікується: True
-
-            IPayable p = testApp;                                       // Змінна типу інтерфейсу
-            Console.WriteLine($"Вартість через IPayable: {p.GetCost()}"); // Очікується: 450
-            Console.WriteLine("---------------------------------------\n");
+            // Тимчасова перевірка Задачі 2
+            Console.WriteLine("\n--- Тимчасова перевірка ICancellable ---");
+            Appointment testApp = new Appointment(patient1.Id, doctor1.Id, DateTime.Today.AddDays(1).AddHours(10), 30);
+            ICancellable c = testApp;
+            Console.WriteLine($"IsCancelled: {c.IsCancelled}");           // False
+            Console.WriteLine($"CancellationReason: '{c.CancellationReason}'"); // (порожній рядок)
+            Console.WriteLine($"Cancel result: {c.Cancel("Лікар захворів")}"); // True
+            Console.WriteLine($"IsCancelled after cancel: {c.IsCancelled}");           // True
+            Console.WriteLine($"CancellationReason: {c.CancellationReason}");    // Лікар захворів
+            Console.WriteLine("-----------------------------------------\n");
 
             string patientName = clinic.Patients.FindById(99)?.FullName ?? "не знайдено";
             Console.WriteLine($"Patient with ID 99: {patientName}");

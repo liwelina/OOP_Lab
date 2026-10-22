@@ -1,11 +1,10 @@
 using ClinicApp.Enums;
 using ClinicApp.Interfaces;
-using ClinicApp.Models;
 using ClinicApp.Utils;
 
 namespace ClinicApp.Models
 {
-    public class Appointment : IPayable
+    public class Appointment : IPayable, ICancellable
     {
         private static int _nextId = 1;
 
@@ -28,9 +27,13 @@ namespace ClinicApp.Models
         public AppointmentStatus Status { get; private set; }
         public string Notes { get; private set; }
 
-        // Реалізація IPayable: приватне поле та властивість IsPaid
+        // Реалізація IPayable
         private bool _isPaid;
         public bool IsPaid => _isPaid;
+
+        // Реалізація ICancellable
+        public bool IsCancelled => Status == AppointmentStatus.Cancelled;
+        public string CancellationReason => IsCancelled ? Notes : "";
 
         public DateTime EndsAt => ScheduledAt.AddMinutes(DurationMinutes);
         public bool IsUpcoming => ScheduledAt > DateTime.Now && Status == AppointmentStatus.Scheduled;
@@ -47,20 +50,17 @@ namespace ClinicApp.Models
             _isPaid = false;
         }
 
-        // Реалізація методів IPayable
-        public decimal GetCost()
-        {
-            // 10 грн за хвилину тривалості
-            return DurationMinutes * 10m;
-        }
-
         public void MarkPaid()
         {
-            // Якщо запис скасований — нічого не робимо (тиха відмова)
-            if (Status != AppointmentStatus.Cancelled)
+            if (!IsCancelled)
             {
                 _isPaid = true;
             }
+        }
+
+        public decimal GetCost()
+        {
+            return DurationMinutes * 10m;
         }
 
         public bool Cancel(string reason = "")
