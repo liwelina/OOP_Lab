@@ -70,7 +70,6 @@ namespace ClinicApp
             clinic.Doctors.Add(doctor2);
             clinic.Doctors.Add(doctor3);
 
-            // Використовуємо різні типи бронювання (Задача 3)
             clinic.Appointments.Book(
                 patient1.Id,
                 doctor1.Id,
@@ -89,7 +88,7 @@ namespace ClinicApp
                 "кардіологія",
                 60);
 
-            // Демонстрація new проти override (Задача 3)
+            
             Console.WriteLine("\n== new vs override ==");
             UrgentAppointment urgentTest = new UrgentAppointment(patient1.Id, doctor1.Id, DateTime.Today.AddDays(1), "тест");
             Appointment appRef = urgentTest;
@@ -98,16 +97,6 @@ namespace ClinicApp
             Console.WriteLine($"Через Appointment:       {appRef.GetDescription()} | пріоритет {appRef.GetPriority()}");
             Console.WriteLine($"Через UrgentAppointment: {urgentRef.GetDescription()} | пріоритет {urgentRef.GetPriority()}");
             Console.WriteLine("=====================\n");
-
-            /*
-             * Відповіді на запитання:
-             * 1. Чому GetDescription() через змінну типу Appointment дає опис термінового прийому?
-             *    — Тому що GetDescription() є віртуальним методом (virtual у базовому класі та override у підкласі). Поліморфізм забезпечує виклик реалізації на основі реального типу об'єкта (в пам'яті), а не типу змінної.
-             * 2. Чому GetPriority() через ту саму змінну повертає 3, хоча об'єкт — UrgentAppointment?
-             *    — Тому що GetPriority() у базовому класі є звичайним (не віртуальним), а в підкласі він прихований через модифікатор `new`. Приховування зв'язується статично за типом змінної (змінна типу Appointment викликає версію базового класу).
-             * 3. Що треба змінити в Appointment і UrgentAppointment, щоб GetPriority() теж працював поліморфно?
-             *    — Потрібно в базовому класі Appointment зробити метод GetPriority() віртуальним (`virtual int GetPriority()`), а в UrgentAppointment перевизначити його через `override int GetPriority()`.
-             */
 
             bool running = true;
 
@@ -283,6 +272,7 @@ namespace ClinicApp
             }
         }
 
+        // Підменю «Записи» з оновленим пунктом 9 (Задача 4)
         private static void RunAppointmentsMenu(Clinic clinic)
         {
             bool back = false;
@@ -292,6 +282,7 @@ namespace ClinicApp
                 Console.WriteLine("── Записи ────────────────────");
                 Console.WriteLine("3. Майбутні записи");
                 Console.WriteLine("8. Скасувати всі записи пацієнта");
+                Console.WriteLine("9. За типом прийому");
                 Console.WriteLine("0. Назад");
                 Console.Write("Оберіть: ");
 
@@ -311,6 +302,27 @@ namespace ClinicApp
                         string reason = Console.ReadLine()!;
                         int cancelledCount = AppointmentManager.CancelAll(clinic.Appointments.GetByPatient(patientId), reason);
                         Console.WriteLine($"Скасовано записів: {cancelledCount}");
+                    }
+                }
+                else if (choice == 9)
+                {
+                    Console.WriteLine("1. Термінові");
+                    Console.WriteLine("2. Консультації спеціаліста");
+                    Console.WriteLine("3. Звичайні");
+                    Console.Write("Оберіть тип: ");
+
+                    if (int.TryParse(Console.ReadLine(), out int typeChoice))
+                    {
+                        Console.WriteLine();
+                        Appointment[] resultList = typeChoice switch
+                        {
+                            1 => clinic.Appointments.GetUrgent(),
+                            2 => clinic.Appointments.GetSpecialist(),
+                            3 => clinic.Appointments.GetRegular(),
+                            _ => Array.Empty<Appointment>()
+                        };
+
+                        clinic.Appointments.DisplayList(resultList);
                     }
                 }
                 else if (choice == 0) back = true;

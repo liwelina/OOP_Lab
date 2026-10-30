@@ -71,7 +71,6 @@ namespace ClinicApp.Managers
             return cancelledCount;
         }
 
-        // Приватний допоміжний метод для збереження запису (щоб не дублювати валідацію)
         private bool AddAppointment(int patientId, int doctorId, DateTime scheduledAt, Appointment app)
         {
             if (_count >= MaxAppointments)
@@ -273,6 +272,67 @@ namespace ClinicApp.Managers
                 }
             }
 
+            return result;
+        }
+
+        // Методи фільтрації за типом для Задачі 4
+        public Appointment[] GetUrgent()
+        {
+            int matches = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i] is UrgentAppointment) matches++;
+            }
+
+            Appointment[] result = new Appointment[matches];
+            int index = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i] is UrgentAppointment)
+                {
+                    result[index++] = _appointments[i];
+                }
+            }
+            return result;
+        }
+
+        public Appointment[] GetSpecialist()
+        {
+            int matches = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i] is SpecialistAppointment) matches++;
+            }
+
+            Appointment[] result = new Appointment[matches];
+            int index = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i] is SpecialistAppointment)
+                {
+                    result[index++] = _appointments[i];
+                }
+            }
+            return result;
+        }
+
+        public Appointment[] GetRegular()
+        {
+            int matches = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i] is RegularAppointment) matches++;
+            }
+
+            Appointment[] result = new Appointment[matches];
+            int index = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_appointments[i] is RegularAppointment)
+                {
+                    result[index++] = _appointments[i];
+                }
+            }
             return result;
         }
 
