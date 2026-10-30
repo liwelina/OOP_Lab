@@ -27,16 +27,18 @@ namespace ClinicApp.Models
         public AppointmentStatus Status { get; private set; }
         public string Notes { get; private set; }
 
-        // Реалізація IPayable
+      
         private bool _isPaid;
         public bool IsPaid => _isPaid;
 
-        // Реалізація ICancellable
         public bool IsCancelled => Status == AppointmentStatus.Cancelled;
         public string CancellationReason => IsCancelled ? Notes : "";
 
         public DateTime EndsAt => ScheduledAt.AddMinutes(DurationMinutes);
         public bool IsUpcoming => ScheduledAt > DateTime.Now && Status == AppointmentStatus.Scheduled;
+
+        
+        public decimal DiscountMultiplier { get; set; } = 1.0m;
 
         public Appointment(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
         {
@@ -58,13 +60,14 @@ namespace ClinicApp.Models
             }
         }
 
-        // Віртуальний метод для вартості (Здача 1)
+        // Віртуальний метод для вартості з урахуванням знижки (Варіант А)
         public virtual decimal GetCost()
         {
-            return DurationMinutes * 10m;
+            // Базова ціна помножена на множник знижки. 
+            // Підкласи викликають base.GetCost(), тому знижка автоматично застосується до термінових та спеціалізованих прийомів.
+            return DurationMinutes * 10m * DiscountMultiplier;
         }
 
-        // Нові віртуальні/звичайні методи (Задача 1)
         public virtual string GetDescription()
         {
             return "Прийом";
