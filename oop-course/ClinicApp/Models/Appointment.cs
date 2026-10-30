@@ -58,9 +58,21 @@ namespace ClinicApp.Models
             }
         }
 
-        public decimal GetCost()
+        // Віртуальний метод для вартості (Здача 1)
+        public virtual decimal GetCost()
         {
             return DurationMinutes * 10m;
+        }
+
+        // Нові віртуальні/звичайні методи (Задача 1)
+        public virtual string GetDescription()
+        {
+            return "Прийом";
+        }
+
+        public int GetPriority()
+        {
+            return 3;
         }
 
         public bool Cancel(string reason = "")
@@ -91,11 +103,12 @@ namespace ClinicApp.Models
 
         public override string ToString()
         {
-            string result = $"[{Id}] Patient #{PatientId} > Doctor #{DoctorId} | {ScheduledAt:dd.MM.yyyy HH:mm}–{EndsAt:HH:mm} | {Status}";
+            string result = $"[{Id}] {GetDescription()} | Patient #{PatientId} > Doctor #{DoctorId} | {ScheduledAt:dd.MM.yyyy HH:mm}–{EndsAt:HH:mm} | {Status}";
             if (Notes.Length > 0)
             {
                 result += $" | {Notes}";
             }
+            result += $" | {GetCost().ToString("F2")} грн";
             return result;
         }
     }
