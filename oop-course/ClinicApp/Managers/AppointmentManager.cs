@@ -71,7 +71,8 @@ namespace ClinicApp.Managers
             return cancelledCount;
         }
 
-        public bool Book(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
+        // Приватний допоміжний метод для збереження запису (щоб не дублювати валідацію)
+        private bool AddAppointment(int patientId, int doctorId, DateTime scheduledAt, Appointment app)
         {
             if (_count >= MaxAppointments)
             {
@@ -80,7 +81,6 @@ namespace ClinicApp.Managers
             }
 
             var patient = _patients.FindById(patientId);
-
             if (patient == null)
             {
                 Console.WriteLine($"Error: patient with ID {patientId} not found.");
@@ -88,21 +88,35 @@ namespace ClinicApp.Managers
             }
 
             var doctor = _doctors.FindById(doctorId);
-
             if (doctor == null)
             {
                 Console.WriteLine($"Error: doctor with ID {doctorId} not found.");
                 return false;
             }
 
-            var app = new Appointment(patientId, doctorId, scheduledAt, durationMinutes);
-
             _appointments[_count] = app;
             _count++;
 
             Console.WriteLine($"Record [{app.Id}] created: {patient.FullName} > {doctor.FullName} о {scheduledAt:dd.MM.yyyy HH:mm}");
-
             return true;
+        }
+
+        public bool Book(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
+        {
+            var app = new RegularAppointment(patientId, doctorId, scheduledAt, durationMinutes);
+            return AddAppointment(patientId, doctorId, scheduledAt, app);
+        }
+
+        public bool BookUrgent(int patientId, int doctorId, DateTime scheduledAt, string urgencyNote = "", int durationMinutes = 30)
+        {
+            var app = new UrgentAppointment(patientId, doctorId, scheduledAt, urgencyNote, durationMinutes);
+            return AddAppointment(patientId, doctorId, scheduledAt, app);
+        }
+
+        public bool BookSpecialist(int patientId, int doctorId, DateTime scheduledAt, string topic = "", int durationMinutes = 45)
+        {
+            var app = new SpecialistAppointment(patientId, doctorId, scheduledAt, topic, durationMinutes);
+            return AddAppointment(patientId, doctorId, scheduledAt, app);
         }
 
         public bool Cancel(int id, string reason = "")
@@ -270,12 +284,14 @@ namespace ClinicApp.Managers
             string patientName = patient != null ? patient.FullName : $"Patient #{app.PatientId}";
             string doctorName = doctor != null ? doctor.FullName : $"Doctor #{app.DoctorId}";
 
-            string line = $"[{app.Id}] {patientName} > {doctorName} | {app.ScheduledAt:dd.MM.yyyy HH:mm}–{app.EndsAt:HH:mm} | {app.Status}";
+            string line = $"[{app.Id}] {app.GetDescription()} | {patientName} > {doctorName} | {app.ScheduledAt:dd.MM.yyyy HH:mm}–{app.EndsAt:HH:mm} | {app.Status}";
 
             if (app.Notes.Length > 0)
             {
                 line += $" | {app.Notes}";
             }
+
+            line += $" | {app.GetCost().ToString("F2")} грн";
 
             Console.WriteLine(line);
         }

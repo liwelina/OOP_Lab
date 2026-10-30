@@ -70,20 +70,44 @@ namespace ClinicApp
             clinic.Doctors.Add(doctor2);
             clinic.Doctors.Add(doctor3);
 
+            // Використовуємо різні типи бронювання (Задача 3)
             clinic.Appointments.Book(
                 patient1.Id,
                 doctor1.Id,
                 DateTime.Now.AddDays(1).Date.AddHours(10));
 
-            clinic.Appointments.Book(
+            clinic.Appointments.BookUrgent(
                 patient2.Id,
                 doctor2.Id,
-                DateTime.Now.AddDays(2).Date.AddHours(12));
+                DateTime.Now.AddDays(2).Date.AddHours(12),
+                "біль у грудях");
 
-            clinic.Appointments.Book(
+            clinic.Appointments.BookSpecialist(
                 patient3.Id,
                 doctor3.Id,
-                DateTime.Now.AddDays(3).Date.AddHours(14));
+                DateTime.Now.AddDays(3).Date.AddHours(14),
+                "кардіологія",
+                60);
+
+            // Демонстрація new проти override (Задача 3)
+            Console.WriteLine("\n== new vs override ==");
+            UrgentAppointment urgentTest = new UrgentAppointment(patient1.Id, doctor1.Id, DateTime.Today.AddDays(1), "тест");
+            Appointment appRef = urgentTest;
+            UrgentAppointment urgentRef = urgentTest;
+
+            Console.WriteLine($"Через Appointment:       {appRef.GetDescription()} | пріоритет {appRef.GetPriority()}");
+            Console.WriteLine($"Через UrgentAppointment: {urgentRef.GetDescription()} | пріоритет {urgentRef.GetPriority()}");
+            Console.WriteLine("=====================\n");
+
+            /*
+             * Відповіді на запитання:
+             * 1. Чому GetDescription() через змінну типу Appointment дає опис термінового прийому?
+             *    — Тому що GetDescription() є віртуальним методом (virtual у базовому класі та override у підкласі). Поліморфізм забезпечує виклик реалізації на основі реального типу об'єкта (в пам'яті), а не типу змінної.
+             * 2. Чому GetPriority() через ту саму змінну повертає 3, хоча об'єкт — UrgentAppointment?
+             *    — Тому що GetPriority() у базовому класі є звичайним (не віртуальним), а в підкласі він прихований через модифікатор `new`. Приховування зв'язується статично за типом змінної (змінна типу Appointment викликає версію базового класу).
+             * 3. Що треба змінити в Appointment і UrgentAppointment, щоб GetPriority() теж працював поліморфно?
+             *    — Потрібно в базовому класі Appointment зробити метод GetPriority() віртуальним (`virtual int GetPriority()`), а в UrgentAppointment перевизначити його через `override int GetPriority()`.
+             */
 
             bool running = true;
 
@@ -126,7 +150,7 @@ namespace ClinicApp
                         break;
 
                     case 4:
-                        Console.WriteLine("Медична картка (функціонал попередніх лаб).");
+                        Console.WriteLine("Медична картка.");
                         break;
 
                     case 5:
@@ -150,7 +174,6 @@ namespace ClinicApp
             Console.WriteLine("Program finished.");
         }
 
-        // Підменю «Рахунки» (Задача 4)
         private static void RunBillingMenu(Clinic clinic)
         {
             bool back = false;
@@ -165,12 +188,7 @@ namespace ClinicApp
                 Console.WriteLine("0. Назад");
                 Console.Write("Оберіть: ");
 
-                if (!int.TryParse(Console.ReadLine(), out int choice))
-                {
-                    Console.WriteLine("Невірний формат. Введіть число.");
-                    continue;
-                }
-
+                if (!int.TryParse(Console.ReadLine(), out int choice)) continue;
                 Console.WriteLine();
 
                 switch (choice)
@@ -185,48 +203,25 @@ namespace ClinicApp
                             clinic.Billing.DisplayUnpaid(unpaid);
                             Console.WriteLine($"Борг: {debt.ToString("F2")} грн");
                         }
-                        else
-                        {
-                            Console.WriteLine("Невірний ID пацієнта.");
-                        }
                         break;
-
                     case 2:
-                        IPayable[] allUnpaid = clinic.Billing.GetAllUnpaid();
-                        clinic.Billing.DisplayUnpaid(allUnpaid);
+                        clinic.Billing.DisplayUnpaid(clinic.Billing.GetAllUnpaid());
                         break;
-
                     case 3:
                         Console.Write("ID запису для оплати: ");
                         if (int.TryParse(Console.ReadLine(), out int appId))
                         {
-                            bool paid = clinic.Billing.PayAppointment(appId);
-                            if (paid)
-                            {
+                            if (clinic.Billing.PayAppointment(appId))
                                 Console.WriteLine($"Запис [{appId}] оплачено.");
-                            }
                             else
-                            {
                                 Console.WriteLine("Не вдалося оплатити: запис не знайдено, вже оплачено або скасовано.");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Невірний ID запису.");
                         }
                         break;
-
                     case 4:
-                        decimal totalDebt = clinic.Billing.GetTotalDebt();
-                        Console.WriteLine($"Загальний борг по клініці: {totalDebt.ToString("F2")} грн");
+                        Console.WriteLine($"Загальний борг по клініці: {clinic.Billing.GetTotalDebt().ToString("F2")} грн");
                         break;
-
                     case 0:
                         back = true;
-                        break;
-
-                    default:
-                        Console.WriteLine("Невідомий пункт меню.");
                         break;
                 }
             }
@@ -237,7 +232,6 @@ namespace ClinicApp
             clinic.Patients.DisplayAll();
         }
 
-        // Підменю «Лікарі» з пунктом 5 (Вільні години через ISchedulable)
         private static void RunDoctorsMenu(Clinic clinic)
         {
             bool back = false;
@@ -250,11 +244,7 @@ namespace ClinicApp
                 Console.WriteLine("0. Назад");
                 Console.Write("Оберіть: ");
 
-                if (!int.TryParse(Console.ReadLine(), out int choice))
-                {
-                    continue;
-                }
-
+                if (!int.TryParse(Console.ReadLine(), out int choice)) continue;
                 Console.WriteLine();
 
                 if (choice == 1)
@@ -267,34 +257,18 @@ namespace ClinicApp
                     if (int.TryParse(Console.ReadLine(), out int docId))
                     {
                         Doctor? doc = clinic.Doctors.FindById(docId);
-                        if (doc == null)
-                        {
-                            Console.WriteLine("Лікаря не знайдено.");
-                            continue;
-                        }
+                        if (doc == null) { Console.WriteLine("Лікаря не знайдено."); continue; }
 
                         Console.Write("Дата (dd.MM.yyyy): ");
-                        string dateStr = Console.ReadLine()!;
-                        if (!DateTime.TryParseExact(dateStr, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime date))
-                        {
-                            Console.WriteLine("Невірний формат дати.");
-                            continue;
-                        }
+                        if (!DateTime.TryParseExact(Console.ReadLine(), "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime date)) continue;
 
                         Console.Write("Скільки слотів: ");
-                        if (!int.TryParse(Console.ReadLine(), out int slotsCount))
-                        {
-                            Console.WriteLine("Невірний формат кількості слотів.");
-                            continue;
-                        }
+                        if (!int.TryParse(Console.ReadLine(), out int slotsCount)) continue;
 
                         try
                         {
-                            // Змінна типу ISchedulable (вимога лаби)
                             ISchedulable schedulableDoctor = doc;
-                            DateTime[] slots = schedulableDoctor.GetAvailableSlots(date, slotsCount);
-
-                            foreach (var slot in slots)
+                            foreach (var slot in schedulableDoctor.GetAvailableSlots(date, slotsCount))
                             {
                                 Console.WriteLine(slot.ToString("HH:mm"));
                             }
@@ -305,14 +279,10 @@ namespace ClinicApp
                         }
                     }
                 }
-                else if (choice == 0)
-                {
-                    back = true;
-                }
+                else if (choice == 0) back = true;
             }
         }
 
-        // Підменю «Записи» з пунктом 8 (Скасувати всі записи пацієнта через CancelAll)
         private static void RunAppointmentsMenu(Clinic clinic)
         {
             bool back = false;
@@ -325,11 +295,7 @@ namespace ClinicApp
                 Console.WriteLine("0. Назад");
                 Console.Write("Оберіть: ");
 
-                if (!int.TryParse(Console.ReadLine(), out int choice))
-                {
-                    continue;
-                }
-
+                if (!int.TryParse(Console.ReadLine(), out int choice)) continue;
                 Console.WriteLine();
 
                 if (choice == 3)
@@ -343,20 +309,11 @@ namespace ClinicApp
                     {
                         Console.Write("Причина (Enter — без причини): ");
                         string reason = Console.ReadLine()!;
-
-                        Appointment[] patientAppointments = clinic.Appointments.GetByPatient(patientId);
-                        int cancelledCount = AppointmentManager.CancelAll(patientAppointments, reason);
+                        int cancelledCount = AppointmentManager.CancelAll(clinic.Appointments.GetByPatient(patientId), reason);
                         Console.WriteLine($"Скасовано записів: {cancelledCount}");
                     }
-                    else
-                    {
-                        Console.WriteLine("Невірний ID пацієнта.");
-                    }
                 }
-                else if (choice == 0)
-                {
-                    back = true;
-                }
+                else if (choice == 0) back = true;
             }
         }
     }
