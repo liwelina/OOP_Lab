@@ -3,61 +3,69 @@ using ClinicApp.Managers;
 using ClinicApp.Models;
 using ClinicApp.Utils;
 
-namespace ClinicApp;
-
-public class Clinic
+namespace ClinicApp
 {
-    public string Name { get; set; }
-    public PatientManager Patients { get; }
-    public DoctorManager Doctors { get; }
-    public AppointmentManager Appointments { get; }
-    public BillingManager Billing { get; } 
-
-    public Clinic(string name)
+    public class Clinic
     {
-        Name = name;
-        Patients = new PatientManager();
-        Doctors = new DoctorManager();
-        Appointments = new AppointmentManager(Patients, Doctors);
-        Billing = new BillingManager(Appointments); 
-    }
+        public string Name { get; set; }
+        public PatientManager Patients { get; }
+        public DoctorManager Doctors { get; }
+        public AppointmentManager Appointments { get; }
+        public BillingManager Billing { get; }
 
-    public void DisplaySchedule(DateTime date)
-    {
-        Console.WriteLine($"=== Schedule for {date:dd.MM.yyyy} ===");
-        Appointment[] dailyApps = Appointments.GetByDate(date);
-        Appointments.DisplayList(dailyApps);
-    }
+        // ×åðãà î÷³êóâàííÿ ïàö³ºíò³â (Çàäà÷à 3, Ëàáà 09)
+        public WaitingQueue<Patient> WaitingRoom { get; }
 
-    public void GenerateReport()
-    {
-        Appointment[] upcomingApps = Appointments.GetUpcoming();
-        Doctor[] allDoctors = Doctors.GetAll();
-
-        Console.WriteLine("ã==============================================¬");
-        Console.WriteLine($"¦  Report — {Name,-34} ¦");
-        Console.WriteLine("¦==============================================¦");
-        Console.WriteLine($"¦  Patients:              {Patients.Count,-20} ¦");
-        Console.WriteLine($"¦  Doctors:               {Doctors.Count,-20} ¦");
-        Console.WriteLine($"¦  Upcoming appointments: {upcomingApps.Length,-20} ¦");
-        Console.WriteLine("¦==============================================¦");
-        Console.WriteLine("¦  Doctors load (upcoming appointments):       ¦");
-
-        for (int i = 0; i < allDoctors.Length; i++)
+        public Clinic(string name)
         {
-            int doctorLoad = 0;
-            for (int j = 0; j < upcomingApps.Length; j++)
-            {
-                if (upcomingApps[j].DoctorId == allDoctors[i].Id)
-                {
-                    doctorLoad++;
-                }
-            }
+            Name = name;
+            Patients = new PatientManager();
+            Doctors = new DoctorManager();
+            Appointments = new AppointmentManager(Patients, Doctors);
+            Billing = new BillingManager(Appointments);
 
-            string doctorInfo = $"{allDoctors[i].FullName} ({allDoctors[i].Speciality}): {doctorLoad} apps";
-            Console.WriteLine($"¦    {doctorInfo,-41} ¦");
+            // ²í³ö³àë³çàö³ÿ ÷åðãè î÷³êóâàííÿ
+            WaitingRoom = new WaitingQueue<Patient>();
         }
 
-        Console.WriteLine("L==============================================-");
+        public void DisplaySchedule(DateTime date)
+        {
+            Console.WriteLine($"=== Schedule for {date:dd.MM.yyyy} ===");
+            Appointment[] dailyApps = Appointments.GetByDate(date);
+            Appointments.DisplayList(dailyApps);
+        }
+
+        public void GenerateReport()
+        {
+            Appointment[] upcomingApps = Appointments.GetUpcoming();
+            Doctor[] allDoctors = Doctors.GetAll();
+
+            Console.WriteLine("ã==============================================¬");
+            Console.WriteLine($"¦  Report — {Name,-34} ¦");
+            Console.WriteLine("¦==============================================¦");
+            Console.WriteLine($"¦  Patients:              {Patients.Count,-20} ¦");
+            Console.WriteLine($"¦  Doctors:               {Doctors.Count,-20} ¦");
+            Console.WriteLine($"¦  Upcoming appointments: {upcomingApps.Length,-20} ¦");
+            Console.WriteLine($"¦  Waiting in queue:      {WaitingRoom.Count,-20} ¦");
+            Console.WriteLine("¦==============================================¦");
+            Console.WriteLine("¦  Doctors load (upcoming appointments):       ¦");
+
+            for (int i = 0; i < allDoctors.Length; i++)
+            {
+                int doctorLoad = 0;
+                for (int j = 0; j < upcomingApps.Length; j++)
+                {
+                    if (upcomingApps[j].DoctorId == allDoctors[i].Id)
+                    {
+                        doctorLoad++;
+                    }
+                }
+
+                string doctorInfo = $"{allDoctors[i].FullName} ({allDoctors[i].Speciality}): {doctorLoad} apps";
+                Console.WriteLine($"¦    {doctorInfo,-41} ¦");
+            }
+
+            Console.WriteLine("L==============================================-");
+        }
     }
 }
