@@ -6,12 +6,10 @@ namespace ClinicApp.Managers
 {
     public class PatientManager
     {
-       
         private List<Patient> _patients = new List<Patient>();
 
         public int Count => _patients.Count;
 
-    
         public Patient? this[int index]
         {
             get
@@ -75,7 +73,6 @@ namespace ClinicApp.Managers
 
         public Patient[] GetAll()
         {
-            
             return _patients.ToArray();
         }
 
@@ -88,7 +85,6 @@ namespace ClinicApp.Managers
                 return false;
             }
 
-            
             _patients.Remove(patient);
             Console.WriteLine($"Patient with ID {id} has been removed.");
             return true;
@@ -96,7 +92,8 @@ namespace ClinicApp.Managers
 
         public void DisplayPatient(Patient patient)
         {
-            Console.WriteLine($"[{patient.Id}] {patient.FullName} | DOB: {patient.BirthDate:dd.MM.yyyy} | Blood: {patient.BloodType} | Phone: {patient.PhoneNumber}");
+           
+            Console.WriteLine($"[{patient.Id}] {patient.FullName} | DOB: {patient.DateOfBirth:dd.MM.yyyy} | Blood: {patient.BloodType} | Phone: {patient.Phone}");
         }
 
         public void DisplayAll()
