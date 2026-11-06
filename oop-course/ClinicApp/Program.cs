@@ -98,7 +98,8 @@ namespace ClinicApp
                 Console.WriteLine("║  3. Записи         — прийоми, скасування     ║");
                 Console.WriteLine("║  4. Медична картка — діагнози, рецепти       ║");
                 Console.WriteLine("║  5. Рахунки        — оплата, борги           ║");
-                Console.WriteLine("║  6. Звіт           — загальна статистика     ║");
+                Console.WriteLine("║  6. Черга          — очікування, прийом      ║");
+                Console.WriteLine("║  7. Звіт           — загальна статистика     ║");
                 Console.WriteLine("║  0. Вийти                                    ║");
                 Console.WriteLine("╚══════════════════════════════════════════════╝");
                 Console.Write("Оберіть розділ: ");
@@ -134,6 +135,10 @@ namespace ClinicApp
                         break;
 
                     case 6:
+                        WaitingRoomMenu(clinic); // Пункт меню черги (Задача 3)
+                        break;
+
+                    case 7:
                         clinic.GenerateReport();
                         break;
 
@@ -150,7 +155,98 @@ namespace ClinicApp
             Console.WriteLine("Program finished.");
         }
 
-        // Підменю «Рахунки» (Задача 4)
+        // Меню черги очікування (Задача 3)
+        private static void WaitingRoomMenu(Clinic clinic)
+        {
+            bool back = false;
+            while (!back)
+            {
+                Console.WriteLine();
+                Console.WriteLine("── Черга ───────────────────────");
+                Console.WriteLine("1. Додати пацієнта до черги");
+                Console.WriteLine("2. Прийняти першого");
+                Console.WriteLine("3. Хто перший?");
+                Console.WriteLine("4. Переглянути всю чергу");
+                Console.WriteLine("0. Назад");
+                Console.Write("Оберіть: ");
+
+                if (!int.TryParse(Console.ReadLine(), out int choice)) continue;
+                Console.WriteLine();
+
+                switch (choice)
+                {
+                    case 1:
+                        Console.Write("Введіть ID пацієнта: ");
+                        if (int.TryParse(Console.ReadLine(), out int patientId))
+                        {
+                            Patient? patient = clinic.Patients.FindById(patientId);
+                            if (patient != null)
+                            {
+                                clinic.WaitingRoom.Enqueue(patient);
+                                Console.WriteLine($"Пацієнта {patient.FullName} додано до черги.");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Пацієнта не знайдено.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Невірний формат ID.");
+                        }
+                        break;
+
+                    case 2:
+                        try
+                        {
+                            Patient accepted = clinic.WaitingRoom.Dequeue();
+                            Console.WriteLine($"Прийнято: {accepted.FullName}. У черзі лишилось: {clinic.WaitingRoom.Count}");
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            Console.WriteLine($"Помилка: {ex.Message}");
+                        }
+                        break;
+
+                    case 3:
+                        try
+                        {
+                            Patient first = clinic.WaitingRoom.Peek();
+                            Console.WriteLine($"Перший у черзі: {first.FullName} (ID: {first.Id})");
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            Console.WriteLine($"Помилка: {ex.Message}");
+                        }
+                        break;
+
+                    case 4:
+                        Patient[] queueArray = clinic.WaitingRoom.ToArray();
+                        if (queueArray.Length == 0)
+                        {
+                            Console.WriteLine("Черга порожня.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("=== Поточна черга очікування ===");
+                            for (int i = 0; i < queueArray.Length; i++)
+                            {
+                                Console.WriteLine($"{i + 1}. [{queueArray[i].Id}] {queueArray[i].FullName}");
+                            }
+                        }
+                        break;
+
+                    case 0:
+                        back = true;
+                        break;
+
+                    default:
+                        Console.WriteLine("Невідомий пункт меню.");
+                        break;
+                }
+            }
+        }
+
         private static void RunBillingMenu(Clinic clinic)
         {
             bool back = false;
@@ -237,7 +333,6 @@ namespace ClinicApp
             clinic.Patients.DisplayAll();
         }
 
-        // Підменю «Лікарі» з пунктом 5 (Вільні години через ISchedulable)
         private static void RunDoctorsMenu(Clinic clinic)
         {
             bool back = false;
@@ -290,7 +385,6 @@ namespace ClinicApp
 
                         try
                         {
-                            // Змінна типу ISchedulable (вимога лаби)
                             ISchedulable schedulableDoctor = doc;
                             DateTime[] slots = schedulableDoctor.GetAvailableSlots(date, slotsCount);
 
@@ -312,7 +406,6 @@ namespace ClinicApp
             }
         }
 
-        // Підменю «Записи» з пунктом 8 (Скасувати всі записи пацієнта через CancelAll)
         private static void RunAppointmentsMenu(Clinic clinic)
         {
             bool back = false;
