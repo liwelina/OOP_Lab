@@ -12,9 +12,10 @@ namespace ClinicApp
         public DoctorManager Doctors { get; }
         public AppointmentManager Appointments { get; }
         public BillingManager Billing { get; }
-
-        // Черга очікування пацієнтів (Задача 3, Лаба 09)
         public WaitingQueue<Patient> WaitingRoom { get; }
+
+        
+        public AnalyticsManager Analytics { get; }
 
         public Clinic(string name)
         {
@@ -23,9 +24,10 @@ namespace ClinicApp
             Doctors = new DoctorManager();
             Appointments = new AppointmentManager(Patients, Doctors);
             Billing = new BillingManager(Appointments);
-
-            // Ініціалізація черги очікування
             WaitingRoom = new WaitingQueue<Patient>();
+
+         
+            Analytics = new AnalyticsManager(Appointments, Doctors, Patients);
         }
 
         public void DisplaySchedule(DateTime date)
