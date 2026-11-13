@@ -1,3 +1,4 @@
+using ClinicApp.Comparators;
 using System.Text;
 using ClinicApp;
 using ClinicApp.Enums;
@@ -91,15 +92,16 @@ namespace ClinicApp
             {
                 Console.WriteLine();
                 Console.WriteLine("╔══════════════════════════════════════════════╗");
-                Console.WriteLine("║           МЕДИЧНА КЛІНІКА                    ║");
+                Console.WriteLine("║            МЕДИЧНА КЛІНІКА                   ║");
                 Console.WriteLine("╠══════════════════════════════════════════════╣");
-                Console.WriteLine("║  1. Пацієнти       — реєстрація, пошук       ║");
-                Console.WriteLine("║  2. Лікарі         — персонал, розклад       ║");
-                Console.WriteLine("║  3. Записи         — прийоми, скасування     ║");
+                Console.WriteLine("║  1. Пацієнти      — реєстрація, пошук        ║");
+                Console.WriteLine("║  2. Лікарі        — персонал, розклад        ║");
+                Console.WriteLine("║  3. Записи        — прийоми, скасування      ║");
                 Console.WriteLine("║  4. Медична картка — діагнози, рецепти       ║");
-                Console.WriteLine("║  5. Рахунки        — оплата, борги           ║");
-                Console.WriteLine("║  6. Черга          — очікування, прийом      ║");
-                Console.WriteLine("║  7. Звіт           — загальна статистика     ║");
+                Console.WriteLine("║  5. Рахунки       — оплата, борги            ║");
+                Console.WriteLine("║  6. Черга         — очікування, прийом       ║");
+                Console.WriteLine("║  7. Звіт          — загальна статистика      ║");
+                Console.WriteLine("║  8. Аналітика     — звіти та сортування      ║");
                 Console.WriteLine("║  0. Вийти                                    ║");
                 Console.WriteLine("╚══════════════════════════════════════════════╝");
                 Console.Write("Оберіть розділ: ");
@@ -135,11 +137,15 @@ namespace ClinicApp
                         break;
 
                     case 6:
-                        WaitingRoomMenu(clinic); // Пункт меню черги (Задача 3)
+                        WaitingRoomMenu(clinic);
                         break;
 
                     case 7:
                         clinic.GenerateReport();
+                        break;
+
+                    case 8:
+                        AnalyticsMenu(clinic); 
                         break;
 
                     case 0:
@@ -155,7 +161,118 @@ namespace ClinicApp
             Console.WriteLine("Program finished.");
         }
 
-        // Меню черги очікування (Задача 3)
+       
+        private static List<DoctorStats> CollectDoctorStats(Clinic clinic)
+        {
+            List<DoctorStats> list = new List<DoctorStats>();
+            foreach (var stat in clinic.Analytics.ComputeDoctorStats())
+            {
+                list.Add(stat);
+            }
+            return list;
+        }
+
+        private static List<PatientStats> CollectPatientStats(Clinic clinic)
+        {
+            List<PatientStats> list = new List<PatientStats>();
+            foreach (var stat in clinic.Analytics.ComputePatientStats())
+            {
+                list.Add(stat);
+            }
+            return list;
+        }
+
+       
+        private static void AnalyticsMenu(Clinic clinic)
+        {
+            bool back = false;
+            while (!back)
+            {
+                Console.WriteLine();
+                Console.WriteLine("── Аналітика ───────────────────");
+                Console.WriteLine("1. Лікарі за навантаженням");
+                Console.WriteLine("2. Лікарі за виручкою");
+                Console.WriteLine("3. Лікарі за іменем");
+                Console.WriteLine("4. Пацієнти за кількістю візитів");
+                Console.WriteLine("5. Пацієнти за витратами");
+                Console.WriteLine("0. Назад");
+                Console.Write("Оберіть: ");
+
+                if (!int.TryParse(Console.ReadLine(), out int choice))
+                {
+                    Console.WriteLine("Невірний формат. Введіть число.");
+                    continue;
+                }
+
+                Console.WriteLine();
+
+                switch (choice)
+                {
+                    case 1:
+                        {
+                            var doctors = CollectDoctorStats(clinic);
+                            doctors.Sort(); 
+                            Console.WriteLine("─── Лікарі за навантаженням ───");
+                            foreach (var d in doctors)
+                            {
+                                Console.WriteLine(d);
+                            }
+                            break;
+                        }
+                    case 2:
+                        {
+                            var doctors = CollectDoctorStats(clinic);
+                            doctors.Sort(new DoctorStatsByRevenue()); 
+                            Console.WriteLine("─── Лікарі за виручкою ───");
+                            foreach (var d in doctors)
+                            {
+                                Console.WriteLine(d);
+                            }
+                            break;
+                        }
+                    case 3:
+                        {
+                            var doctors = CollectDoctorStats(clinic);
+                            doctors.Sort(new DoctorStatsByName()); 
+                            Console.WriteLine("─── Лікарі за іменем ───");
+                            foreach (var d in doctors)
+                            {
+                                Console.WriteLine(d);
+                            }
+                            break;
+                        }
+                    case 4:
+                        {
+                            var patients = CollectPatientStats(clinic);
+                            patients.Sort(); 
+                            Console.WriteLine("─── Пацієнти за кількістю візитів ───");
+                            foreach (var p in patients)
+                            {
+                                Console.WriteLine(p);
+                            }
+                            break;
+                        }
+                    case 5:
+                        {
+                            var patients = CollectPatientStats(clinic);
+                            patients.Sort(new PatientStatsBySpent()); 
+                            Console.WriteLine("─── Пацієнти за витратами ───");
+                            foreach (var p in patients)
+                            {
+                                Console.WriteLine(p);
+                            }
+                            break;
+                        }
+                    case 0:
+                        back = true;
+                        break;
+                    default:
+                        Console.WriteLine("Невідомий пункт меню.");
+                        break;
+                }
+            }
+        }
+
         private static void WaitingRoomMenu(Clinic clinic)
         {
             bool back = false;
