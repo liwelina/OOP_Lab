@@ -20,15 +20,13 @@
         public int CompareTo(DoctorStats? other)
         {
             if (other == null) return 1;
-
-           
             return other.AppointmentCount.CompareTo(this.AppointmentCount);
         }
 
         public override string ToString()
         {
             string dateStr = LastAppointmentDate == DateTime.MinValue ? "немає" : LastAppointmentDate.ToString("dd.MM.yyyy");
-            return $"[ID: {DoctorId}] {FullName} | Прийомів: {AppointmentCount} | Виручка: {TotalRevenue.ToString("F2")} грн | Останній прийом: {dateStr}";
+            return $"[ID: {DoctorId}] {FullName} | Прийомів: {AppointmentCount} | Виручка: {TotalRevenue:F2} грн | Останній прийом: {dateStr}";
         }
     }
 }
