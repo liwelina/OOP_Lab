@@ -201,6 +201,7 @@ namespace ClinicApp
                 Console.WriteLine("1. Останні рядки лога");
                 Console.WriteLine("2. Очистити лог");
                 Console.WriteLine("3. Експортувати всі звіти");
+                Console.WriteLine("4. Імпорт пацієнтів з CSV");
                 Console.WriteLine("0. Назад");
                 Console.Write("Оберіть: ");
 
@@ -257,6 +258,17 @@ namespace ClinicApp
                                 Console.WriteLine($"  - {filePath}");
                                 clinic.Logger.LogInfo($"Експортовано звіт: {filePath}");
                             }
+                            break;
+                        }
+
+                    case 4:
+                        {
+                            Console.Write("Шлях до CSV-файлу: ");
+                            string path = Console.ReadLine()!.Trim();
+                            ImportResult importResult = CsvImporter.ImportPatients(clinic, path);
+                            importResult.Print();
+                            clinic.Logger.LogInfo(
+                                $"Імпорт з CSV '{path}': імпортовано {importResult.Imported}, пропущено {importResult.Skipped}.");
                             break;
                         }
 
