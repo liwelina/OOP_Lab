@@ -200,6 +200,7 @@ namespace ClinicApp
                 Console.WriteLine("── Файли ───────────────────────");
                 Console.WriteLine("1. Останні рядки лога");
                 Console.WriteLine("2. Очистити лог");
+                Console.WriteLine("3. Експортувати всі звіти");
                 Console.WriteLine("0. Назад");
                 Console.Write("Оберіть: ");
 
@@ -244,6 +245,18 @@ namespace ClinicApp
                         {
                             clinic.Logger.Clear();
                             Console.WriteLine("Лог очищено.");
+                            break;
+                        }
+
+                    case 3:
+                        {
+                            string[] exportedPaths = clinic.Exporter.ExportAll();
+                            Console.WriteLine("Експортовано звіти:");
+                            foreach (string filePath in exportedPaths)
+                            {
+                                Console.WriteLine($"  - {filePath}");
+                                clinic.Logger.LogInfo($"Експортовано звіт: {filePath}");
+                            }
                             break;
                         }
 
