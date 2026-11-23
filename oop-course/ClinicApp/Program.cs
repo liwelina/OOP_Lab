@@ -43,8 +43,11 @@ namespace ClinicApp
                 "andrii@gmail.com");
 
             clinic.Patients.Add(patient1);
+            clinic.Logger.LogInfo($"Додано пацієнта #{patient1.Id}: {patient1.FullName}");
             clinic.Patients.Add(patient2);
+            clinic.Logger.LogInfo($"Додано пацієнта #{patient2.Id}: {patient2.FullName}");
             clinic.Patients.Add(patient3);
+            clinic.Logger.LogInfo($"Додано пацієнта #{patient3.Id}: {patient3.FullName}");
 
             Doctor doctor1 = new Doctor(
                 "Anna",
@@ -68,23 +71,38 @@ namespace ClinicApp
                 "0933334455");
 
             clinic.Doctors.Add(doctor1);
+            clinic.Logger.LogInfo($"Додано лікаря #{doctor1.Id}: {doctor1.FullName}");
             clinic.Doctors.Add(doctor2);
+            clinic.Logger.LogInfo($"Додано лікаря #{doctor2.Id}: {doctor2.FullName}");
             clinic.Doctors.Add(doctor3);
+            clinic.Logger.LogInfo($"Додано лікаря #{doctor3.Id}: {doctor3.FullName}");
 
-            clinic.Appointments.Book(
+            bool booked1 = clinic.Appointments.Book(
                 patient1.Id,
                 doctor1.Id,
                 DateTime.Now.AddDays(1).Date.AddHours(10));
+            if (booked1)
+            {
+                clinic.Logger.LogInfo($"Створено запис: пацієнт #{patient1.Id} → лікар #{doctor1.Id}");
+            }
 
-            clinic.Appointments.Book(
+            bool booked2 = clinic.Appointments.Book(
                 patient2.Id,
                 doctor2.Id,
                 DateTime.Now.AddDays(2).Date.AddHours(12));
+            if (booked2)
+            {
+                clinic.Logger.LogInfo($"Створено запис: пацієнт #{patient2.Id} → лікар #{doctor2.Id}");
+            }
 
-            clinic.Appointments.Book(
+            bool booked3 = clinic.Appointments.Book(
                 patient3.Id,
                 doctor3.Id,
                 DateTime.Now.AddDays(3).Date.AddHours(14));
+            if (booked3)
+            {
+                clinic.Logger.LogInfo($"Створено запис: пацієнт #{patient3.Id} → лікар #{doctor3.Id}");
+            }
 
             bool running = true;
 
@@ -103,6 +121,7 @@ namespace ClinicApp
                 Console.WriteLine("║  7. Звіт          — загальна статистика      ║");
                 Console.WriteLine("║  8. Аналітика     — звіти та сортування      ║");
                 Console.WriteLine("║  9. Плани лікування — рефлексія, атрибути    ║");
+                Console.WriteLine("║ 10. Файли         — логи, робота з файлами   ║");
                 Console.WriteLine("║  0. Вийти                                    ║");
                 Console.WriteLine("╚══════════════════════════════════════════════╝");
                 Console.Write("Оберіть розділ: ");
@@ -110,6 +129,7 @@ namespace ClinicApp
                 if (!int.TryParse(Console.ReadLine(), out int choice))
                 {
                     Console.WriteLine("Невірний формат. Введіть число.");
+                    clinic.Logger.LogWarning("Помилка введення: у головному меню введено не число.");
                     continue;
                 }
 
@@ -153,8 +173,82 @@ namespace ClinicApp
                         TreatmentPlansMenu(clinic);
                         break;
 
+                    case 10:
+                        FilesMenu(clinic);
+                        break;
+
                     case 0:
                         running = false;
+                        break;
+
+                    default:
+                        Console.WriteLine("Невідомий пункт меню.");
+                        clinic.Logger.LogWarning($"Помилка введення: невідомий пункт головного меню ({choice}).");
+                        break;
+                }
+            }
+
+            Console.WriteLine("Program finished.");
+        }
+
+        private static void FilesMenu(Clinic clinic)
+        {
+            bool back = false;
+            while (!back)
+            {
+                Console.WriteLine();
+                Console.WriteLine("── Файли ───────────────────────");
+                Console.WriteLine("1. Останні рядки лога");
+                Console.WriteLine("2. Очистити лог");
+                Console.WriteLine("0. Назад");
+                Console.Write("Оберіть: ");
+
+                if (!int.TryParse(Console.ReadLine(), out int choice))
+                {
+                    Console.WriteLine("Невірний формат. Введіть число.");
+                    clinic.Logger.LogWarning("Помилка введення у меню «Файли»: введено не число.");
+                    continue;
+                }
+
+                Console.WriteLine();
+
+                switch (choice)
+                {
+                    case 1:
+                        {
+                            Console.Write("Скільки останніх рядків показати: ");
+                            if (int.TryParse(Console.ReadLine(), out int n))
+                            {
+                                string[] lines = clinic.Logger.GetLastLines(n);
+                                if (lines.Length == 0)
+                                {
+                                    Console.WriteLine("Лог порожній або файл відсутній.");
+                                }
+                                else
+                                {
+                                    foreach (string line in lines)
+                                    {
+                                        Console.WriteLine(line);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Невірний формат кількості рядків.");
+                                clinic.Logger.LogWarning("Помилка введення: некоректне число рядків лога.");
+                            }
+                            break;
+                        }
+
+                    case 2:
+                        {
+                            clinic.Logger.Clear();
+                            Console.WriteLine("Лог очищено.");
+                            break;
+                        }
+
+                    case 0:
+                        back = true;
                         break;
 
                     default:
@@ -162,8 +256,6 @@ namespace ClinicApp
                         break;
                 }
             }
-
-            Console.WriteLine("Program finished.");
         }
 
         private static List<DoctorStats> CollectDoctorStats(Clinic clinic)
@@ -204,6 +296,7 @@ namespace ClinicApp
                 if (!int.TryParse(Console.ReadLine(), out int choice))
                 {
                     Console.WriteLine("Невірний формат. Введіть число.");
+                    clinic.Logger.LogWarning("Помилка введення у меню «Аналітика»: введено не число.");
                     continue;
                 }
 
@@ -304,15 +397,18 @@ namespace ClinicApp
                             {
                                 clinic.WaitingRoom.Enqueue(patient);
                                 Console.WriteLine($"Пацієнта {patient.FullName} додано до черги.");
+                                clinic.Logger.LogInfo($"Пацієнта #{patient.Id} ({patient.FullName}) додано до черги.");
                             }
                             else
                             {
                                 Console.WriteLine("Пацієнта не знайдено.");
+                                clinic.Logger.LogWarning($"Спроба додати до черги неіснуючого пацієнта #{patientId}.");
                             }
                         }
                         else
                         {
                             Console.WriteLine("Невірний формат ID.");
+                            clinic.Logger.LogWarning("Помилка введення: невірний формат ID пацієнта в черзі.");
                         }
                         break;
 
@@ -321,10 +417,12 @@ namespace ClinicApp
                         {
                             Patient accepted = clinic.WaitingRoom.Dequeue();
                             Console.WriteLine($"Прийнято: {accepted.FullName}. У черзі лишилось: {clinic.WaitingRoom.Count}");
+                            clinic.Logger.LogInfo($"Прийнято пацієнта з черги: #{accepted.Id} ({accepted.FullName}).");
                         }
                         catch (InvalidOperationException ex)
                         {
                             Console.WriteLine($"Помилка: {ex.Message}");
+                            clinic.Logger.LogWarning($"Помилка прийому з черги: {ex.Message}");
                         }
                         break;
 
@@ -337,6 +435,7 @@ namespace ClinicApp
                         catch (InvalidOperationException ex)
                         {
                             Console.WriteLine($"Помилка: {ex.Message}");
+                            clinic.Logger.LogWarning($"Помилка перегляду першого в черзі: {ex.Message}");
                         }
                         break;
 
@@ -384,6 +483,7 @@ namespace ClinicApp
                 if (!int.TryParse(Console.ReadLine(), out int choice))
                 {
                     Console.WriteLine("Невірний формат. Введіть число.");
+                    clinic.Logger.LogWarning("Помилка введення у меню «Рахунки»: введено не число.");
                     continue;
                 }
 
@@ -404,6 +504,7 @@ namespace ClinicApp
                         else
                         {
                             Console.WriteLine("Невірний ID пацієнта.");
+                            clinic.Logger.LogWarning("Помилка введення: невірний ID пацієнта при перевірці боргів.");
                         }
                         break;
 
@@ -420,15 +521,18 @@ namespace ClinicApp
                             if (paid)
                             {
                                 Console.WriteLine($"Запис [{appId}] оплачено.");
+                                clinic.Logger.LogInfo($"Оплачено запис #{appId}.");
                             }
                             else
                             {
                                 Console.WriteLine("Не вдалося оплатити: запис не знайдено, вже оплачено або скасовано.");
+                                clinic.Logger.LogWarning($"Неуспішна спроба оплати запису #{appId}.");
                             }
                         }
                         else
                         {
                             Console.WriteLine("Невірний ID запису.");
+                            clinic.Logger.LogWarning("Помилка введення: невірний ID запису при оплаті.");
                         }
                         break;
 
@@ -485,6 +589,7 @@ namespace ClinicApp
                         if (doc == null)
                         {
                             Console.WriteLine("Лікаря не знайдено.");
+                            clinic.Logger.LogWarning($"Спроба переглянути слоти неіснуючого лікаря #{docId}.");
                             continue;
                         }
 
@@ -493,6 +598,7 @@ namespace ClinicApp
                         if (!DateTime.TryParseExact(dateStr, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime date))
                         {
                             Console.WriteLine("Невірний формат дати.");
+                            clinic.Logger.LogWarning($"Помилка введення дати для лікаря #{docId}: '{dateStr}'.");
                             continue;
                         }
 
@@ -500,6 +606,7 @@ namespace ClinicApp
                         if (!int.TryParse(Console.ReadLine(), out int slotsCount))
                         {
                             Console.WriteLine("Невірний формат кількості слотів.");
+                            clinic.Logger.LogWarning("Помилка введення: невірний формат кількості слотів.");
                             continue;
                         }
 
@@ -516,7 +623,13 @@ namespace ClinicApp
                         catch (ArgumentOutOfRangeException ex)
                         {
                             Console.WriteLine($"Помилка: {ex.Message}");
+                            clinic.Logger.LogWarning($"Помилка отримання слотів для лікаря #{docId}: {ex.Message}");
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Невірний формат ID лікаря.");
+                        clinic.Logger.LogWarning("Помилка введення: невірний формат ID лікаря.");
                     }
                 }
                 else if (choice == 0)
@@ -560,10 +673,12 @@ namespace ClinicApp
                         Appointment[] patientAppointments = clinic.Appointments.GetByPatient(patientId);
                         int cancelledCount = AppointmentManager.CancelAll(patientAppointments, reason);
                         Console.WriteLine($"Скасовано записів: {cancelledCount}");
+                        clinic.Logger.LogInfo($"Скасовано записів для пацієнта #{patientId}: {cancelledCount} (причина: '{reason}').");
                     }
                     else
                     {
                         Console.WriteLine("Невірний ID пацієнта.");
+                        clinic.Logger.LogWarning("Помилка введення: невірний ID пацієнта при скасуванні записів.");
                     }
                 }
                 else if (choice == 0)
@@ -593,6 +708,7 @@ namespace ClinicApp
                 if (!int.TryParse(Console.ReadLine(), out int choice))
                 {
                     Console.WriteLine("Невірний формат. Введіть число.");
+                    clinic.Logger.LogWarning("Помилка введення у меню «Плани лікування»: введено не число.");
                     continue;
                 }
 
@@ -624,6 +740,11 @@ namespace ClinicApp
                             if (added)
                             {
                                 Console.WriteLine("План лікування додано.");
+                                clinic.Logger.LogInfo($"Додано план лікування #{newPlan.Id} для пацієнта #{newPlan.PatientId}.");
+                            }
+                            else
+                            {
+                                clinic.Logger.LogWarning("Спроба додати невалідний план лікування.");
                             }
                             break;
                         }
@@ -649,6 +770,7 @@ namespace ClinicApp
                             else
                             {
                                 Console.WriteLine("Невірний ID пацієнта.");
+                                clinic.Logger.LogWarning("Помилка введення: невірний ID пацієнта при пошуку планів.");
                             }
                             break;
                         }
@@ -662,19 +784,23 @@ namespace ClinicApp
                                 if (plan == null)
                                 {
                                     Console.WriteLine("План не знайдено.");
+                                    clinic.Logger.LogWarning($"Спроба активувати неіснуючий план #{planId}.");
                                 }
                                 else if (plan.Activate())
                                 {
                                     Console.WriteLine("План активовано.");
+                                    clinic.Logger.LogInfo($"Активовано план лікування #{plan.Id}.");
                                 }
                                 else
                                 {
                                     Console.WriteLine("Неможливо активувати план у поточному статусі.");
+                                    clinic.Logger.LogWarning($"Неможливо активувати план #{plan.Id} (статус: {plan.Status}).");
                                 }
                             }
                             else
                             {
                                 Console.WriteLine("Невірний ID плану.");
+                                clinic.Logger.LogWarning("Помилка введення: невірний ID плану при активації.");
                             }
                             break;
                         }
@@ -688,19 +814,23 @@ namespace ClinicApp
                                 if (plan == null)
                                 {
                                     Console.WriteLine("План не знайдено.");
+                                    clinic.Logger.LogWarning($"Спроба завершити неіснуючий план #{planId}.");
                                 }
                                 else if (plan.Complete())
                                 {
                                     Console.WriteLine("План завершено.");
+                                    clinic.Logger.LogInfo($"Завершено план лікування #{plan.Id}.");
                                 }
                                 else
                                 {
                                     Console.WriteLine("Неможливо завершити план у поточному статусі.");
+                                    clinic.Logger.LogWarning($"Неможливо завершити план #{plan.Id} (статус: {plan.Status}).");
                                 }
                             }
                             else
                             {
                                 Console.WriteLine("Невірний ID плану.");
+                                clinic.Logger.LogWarning("Помилка введення: невірний ID плану при завершенні.");
                             }
                             break;
                         }
@@ -714,19 +844,23 @@ namespace ClinicApp
                                 if (plan == null)
                                 {
                                     Console.WriteLine("План не знайдено.");
+                                    clinic.Logger.LogWarning($"Спроба скасувати неіснуючий план #{planId}.");
                                 }
                                 else if (plan.Cancel())
                                 {
                                     Console.WriteLine("План скасовано.");
+                                    clinic.Logger.LogInfo($"Скасовано план лікування #{plan.Id}.");
                                 }
                                 else
                                 {
                                     Console.WriteLine("Неможливо скасувати план у поточному статусі.");
+                                    clinic.Logger.LogWarning($"Неможливо скасувати план #{plan.Id} (статус: {plan.Status}).");
                                 }
                             }
                             else
                             {
                                 Console.WriteLine("Невірний ID плану.");
+                                clinic.Logger.LogWarning("Помилка введення: невірний ID плану при скасуванні.");
                             }
                             break;
                         }
