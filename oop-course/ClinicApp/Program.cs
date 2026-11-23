@@ -104,6 +104,18 @@ namespace ClinicApp
                 clinic.Logger.LogInfo($"Створено запис: пацієнт #{patient3.Id} → лікар #{doctor3.Id}");
             }
 
+            if (clinic.Session.Exists())
+            {
+                Console.Write("Знайдено збережену сесію. Завантажити? (y/n): ");
+                string answer = (Console.ReadLine() ?? "").Trim().ToLower();
+                if (answer == "y" || answer == "yes" || answer == "так")
+                {
+                    int loadedCount = clinic.Session.Load(clinic);
+                    Console.WriteLine($"Завантажено {loadedCount} пацієнтів.");
+                    clinic.Logger.LogInfo($"Завантажено сесію: додано {loadedCount} пацієнтів.");
+                }
+            }
+
             bool running = true;
 
             while (running)
@@ -178,6 +190,14 @@ namespace ClinicApp
                         break;
 
                     case 0:
+                        Console.Write("Зберегти сесію? (y/n): ");
+                        string saveAnswer = (Console.ReadLine() ?? "").Trim().ToLower();
+                        if (saveAnswer == "y" || saveAnswer == "yes" || saveAnswer == "так")
+                        {
+                            clinic.Session.Save(clinic);
+                            Console.WriteLine("Сесію збережено.");
+                            clinic.Logger.LogInfo("Сесію збережено при виході.");
+                        }
                         running = false;
                         break;
 
