@@ -1,4 +1,5 @@
 using ClinicApp.Enums;
+using ClinicApp.Events;
 using ClinicApp.Interfaces;
 using ClinicApp.Models;
 
@@ -15,6 +16,7 @@ namespace ClinicApp.Managers
         private int _count = 0;
 
         public int Count => _count;
+        public event EventHandler<AppointmentEventArgs>? AppointmentBooked;
 
         public Appointment? this[int index]
         {
@@ -46,6 +48,18 @@ namespace ClinicApp.Managers
             }
 
             return null;
+        }
+
+        private void OnAppointmentBooked(Appointment appointment, string notes = "")
+        {
+            AppointmentEventArgs args = new AppointmentEventArgs(
+                appointment.Id,
+                appointment.PatientId,
+                appointment.DoctorId,
+                appointment.ScheduledAt,
+                notes);
+
+            AppointmentBooked?.Invoke(this, args);
         }
 
         public Appointment[] GetAll()
@@ -101,6 +115,7 @@ namespace ClinicApp.Managers
             _count++;
 
             Console.WriteLine($"Record [{app.Id}] created: {patient.FullName} > {doctor.FullName} î {scheduledAt:dd.MM.yyyy HH:mm}");
+            OnAppointmentBooked(app);
 
             return true;
         }

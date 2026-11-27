@@ -2,6 +2,7 @@ using ClinicApp.Comparators;
 using System.Text;
 using ClinicApp;
 using ClinicApp.Enums;
+using ClinicApp.Events;
 using ClinicApp.Interfaces;
 using ClinicApp.Managers;
 using ClinicApp.Models;
@@ -11,12 +12,16 @@ namespace ClinicApp
 {
     internal class Program
     {
+        private static void OnAppointmentBookedConsole(object? sender, AppointmentEventArgs e)
+            => Console.WriteLine($"  [EVENT] Запис #{e.AppointmentId} створено: пацієнт #{e.PatientId} → лікар #{e.DoctorId}, {e.ScheduledAt:dd.MM.yyyy HH:mm}");
+
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
 
             Clinic clinic = new Clinic("City Clinic");
+            clinic.Appointments.AppointmentBooked += OnAppointmentBookedConsole;
 
             Patient patient1 = new Patient(
                 "Ivan",
