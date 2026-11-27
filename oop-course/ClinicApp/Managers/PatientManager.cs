@@ -1,113 +1,86 @@
-using ClinicApp.Enums;
+using ClinicApp.Events;
 using ClinicApp.Models;
-using ClinicApp.Utils;
 
 namespace ClinicApp.Managers
 {
     public class PatientManager
     {
-        private List<Patient> _patients = new List<Patient>();
+        private const int MaxPatients = 200;
+        private Patient[] _patients = new Patient[MaxPatients];
+        private int _count = 0;
 
-        public int Count => _patients.Count;
+        public int Count => _count;
+
+        public event EventHandler<PatientEventArgs>? PatientAdded;
 
         public Patient? this[int index]
         {
             get
             {
-                if (index < 0 || index >= _patients.Count)
+                if (index < 0 || index >= _count)
                 {
                     return null;
                 }
+
                 return _patients[index];
             }
         }
 
-        public void Add(Patient patient)
+        public bool Add(Patient patient)
         {
-            _patients.Add(patient);
-            Console.WriteLine($"Patient registered: {patient.FullName} (ID: {patient.Id})");
+            if (patient == null)
+            {
+                Console.WriteLine("Error: patient cannot be null.");
+                return false;
+            }
+
+            if (_count >= MaxPatients)
+            {
+                Console.WriteLine("Error: patient limit reached.");
+                return false;
+            }
+
+            _patients[_count] = patient;
+            _count++;
+
+            PatientAdded?.Invoke(this, new PatientEventArgs(patient.Id, patient.FullName));
+            return true;
         }
 
         public Patient? FindById(int id)
         {
-            foreach (var patient in _patients)
+            for (int i = 0; i < _count; i++)
             {
-                if (patient.Id == id)
+                if (_patients[i].Id == id)
                 {
-                    return patient;
+                    return _patients[i];
                 }
             }
+
             return null;
-        }
-
-        public Patient[] FindByName(string firstName, string lastName)
-        {
-            List<Patient> matches = new List<Patient>();
-
-            foreach (var patient in _patients)
-            {
-                if (patient.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
-                    patient.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase))
-                {
-                    matches.Add(patient);
-                }
-            }
-
-            return matches.ToArray();
-        }
-
-        public Patient[] FindByBloodType(BloodType bloodType)
-        {
-            List<Patient> matches = new List<Patient>();
-
-            foreach (var patient in _patients)
-            {
-                if (patient.BloodType == bloodType)
-                {
-                    matches.Add(patient);
-                }
-            }
-
-            return matches.ToArray();
         }
 
         public Patient[] GetAll()
         {
-            return _patients.ToArray();
-        }
-
-        public bool Remove(int id)
-        {
-            var patient = FindById(id);
-            if (patient == null)
+            Patient[] copy = new Patient[_count];
+            for (int i = 0; i < _count; i++)
             {
-                Console.WriteLine($"Error: patient with ID {id} not found.");
-                return false;
+                copy[i] = _patients[i];
             }
-
-            _patients.Remove(patient);
-            Console.WriteLine($"Patient with ID {id} has been removed.");
-            return true;
-        }
-
-        public void DisplayPatient(Patient patient)
-        {
-           
-            Console.WriteLine($"[{patient.Id}] {patient.FullName} | DOB: {patient.DateOfBirth:dd.MM.yyyy} | Blood: {patient.BloodType} | Phone: {patient.Phone}");
+            return copy;
         }
 
         public void DisplayAll()
         {
-            if (_patients.Count == 0)
+            if (_count == 0)
             {
-                Console.WriteLine("No registered patients.");
+                Console.WriteLine("No patients registered.");
                 return;
             }
 
-            Console.WriteLine("=== Patients List ===");
-            foreach (var patient in _patients)
+            for (int i = 0; i < _count; i++)
             {
-                DisplayPatient(patient);
+                Console.WriteLine(_patients[i]);
             }
         }
     }

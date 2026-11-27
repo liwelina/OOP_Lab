@@ -1,78 +1,99 @@
-﻿using ClinicApp.Enums;
+﻿using ClinicApp.Events;
 using ClinicApp.Models;
-using ClinicApp.Utils;
 
 namespace ClinicApp.Managers
 {
     public class TreatmentPlanManager
     {
-        private readonly List<TreatmentPlan> _plans = new List<TreatmentPlan>();
+        private const int MaxPlans = 200;
+        private TreatmentPlan[] _plans = new TreatmentPlan[MaxPlans];
+        private int _count = 0;
+
+        public int Count => _count;
+
+        public event EventHandler<TreatmentPlanEventArgs>? PlanCompleted;
 
         public bool Add(TreatmentPlan plan)
         {
             if (plan == null)
             {
-                Console.WriteLine("[!] TreatmentPlan is null.");
+                Console.WriteLine("Помилка: план лікування не може бути порожнім.");
                 return false;
             }
 
-            ValidationResult validation = ModelValidator.Validate(plan);
-            if (!validation.IsValid)
+            if (_count >= MaxPlans)
             {
-                validation.Print();
+                Console.WriteLine("Помилка: досягнуто ліміт планів лікування.");
                 return false;
             }
 
-            _plans.Add(plan);
+            _plans[_count] = plan;
+            _count++;
             return true;
         }
 
         public TreatmentPlan? GetById(int id)
         {
-            foreach (TreatmentPlan plan in _plans)
+            for (int i = 0; i < _count; i++)
             {
-                if (plan.Id == id)
+                if (_plans[i].Id == id)
                 {
-                    return plan;
+                    return _plans[i];
                 }
             }
+
             return null;
-        }
-
-        public TreatmentPlan[] GetByPatient(int patientId)
-        {
-            List<TreatmentPlan> result = new List<TreatmentPlan>();
-            foreach (TreatmentPlan plan in _plans)
-            {
-                if (plan.PatientId == patientId)
-                {
-                    result.Add(plan);
-                }
-            }
-            return result.ToArray();
-        }
-
-        public TreatmentPlan[] GetByStatus(TreatmentStatus status)
-        {
-            List<TreatmentPlan> result = new List<TreatmentPlan>();
-            foreach (TreatmentPlan plan in _plans)
-            {
-                if (plan.Status == status)
-                {
-                    result.Add(plan);
-                }
-            }
-            return result.ToArray();
         }
 
         public TreatmentPlan[] GetAll()
         {
-            TreatmentPlan[] copy = new TreatmentPlan[_plans.Count];
-            for (int i = 0; i < _plans.Count; i++)
+            TreatmentPlan[] copy = new TreatmentPlan[_count];
+            for (int i = 0; i < _count; i++)
             {
                 copy[i] = _plans[i];
             }
             return copy;
+        }
+
+        public TreatmentPlan[] GetByPatient(int patientId)
+        {
+            int matches = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_plans[i].PatientId == patientId)
+                {
+                    matches++;
+                }
+            }
+
+            TreatmentPlan[] result = new TreatmentPlan[matches];
+            int index = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                if (_plans[i].PatientId == patientId)
+                {
+                    result[index++] = _plans[i];
+                }
+            }
+
+            return result;
+        }
+
+        public bool Complete(int planId)
+        {
+            TreatmentPlan? plan = GetById(planId);
+            if (plan == null)
+            {
+                return false;
+            }
+
+            if (!plan.Complete())
+            {
+                return false;
+            }
+
+            PlanCompleted?.Invoke(this, new TreatmentPlanEventArgs(plan.Id, plan.PatientId, plan.Diagnosis));
+            return true;
         }
     }
 }

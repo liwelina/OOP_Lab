@@ -2,6 +2,7 @@ using ClinicApp.Comparators;
 using System.Text;
 using ClinicApp;
 using ClinicApp.Enums;
+using ClinicApp.Events;
 using ClinicApp.Interfaces;
 using ClinicApp.Managers;
 using ClinicApp.Models;
@@ -11,12 +12,16 @@ namespace ClinicApp
 {
     internal class Program
     {
+        private static void OnAppointmentBookedConsole(object? sender, AppointmentEventArgs e)
+            => Console.WriteLine($"  [EVENT] Запис #{e.AppointmentId} створено: пацієнт #{e.PatientId} → лікар #{e.DoctorId}, {e.ScheduledAt:dd.MM.yyyy HH:mm}");
+
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
 
             Clinic clinic = new Clinic("City Clinic");
+            clinic.Appointments.AppointmentBooked += OnAppointmentBookedConsole;
 
             Patient patient1 = new Patient(
                 "Ivan",
@@ -190,6 +195,8 @@ namespace ClinicApp
                         break;
 
                     case 0:
+                        clinic.Tracker.PrintSummary();
+                        clinic.Tracker.SaveSummary();
                         Console.Write("Зберегти сесію? (y/n): ");
                         string saveAnswer = (Console.ReadLine() ?? "").Trim().ToLower();
                         if (saveAnswer == "y" || saveAnswer == "yes" || saveAnswer == "так")
@@ -770,9 +777,9 @@ namespace ClinicApp
                             }
                             else
                             {
-                                foreach (TreatmentPlan plan in allPlans)
+                                for (int i = 0; i < allPlans.Length; i++)
                                 {
-                                    Console.WriteLine(plan);
+                                    Console.WriteLine(allPlans[i]);
                                 }
                             }
                             break;
@@ -780,16 +787,33 @@ namespace ClinicApp
 
                     case 2:
                         {
-                            TreatmentPlan newPlan = FormBuilder.Build<TreatmentPlan>();
-                            bool added = clinic.TreatmentPlans.Add(newPlan);
-                            if (added)
+                            Console.Write("ID пацієнта: ");
+                            if (!int.TryParse(Console.ReadLine(), out int patientId))
+                            {
+                                Console.WriteLine("Невірний ID пацієнта.");
+                                break;
+                            }
+
+                            Console.Write("Діагноз: ");
+                            string diagnosis = Console.ReadLine() ?? "";
+
+                            Console.Write("Тривалість (днів): ");
+                            if (!int.TryParse(Console.ReadLine(), out int days))
+                            {
+                                Console.WriteLine("Невірна тривалість.");
+                                break;
+                            }
+
+                            TreatmentPlan plan = new TreatmentPlan
+                            {
+                                PatientId = patientId,
+                                Diagnosis = diagnosis,
+                                DurationDays = days
+                            };
+
+                            if (clinic.TreatmentPlans.Add(plan))
                             {
                                 Console.WriteLine("План лікування додано.");
-                                clinic.Logger.LogInfo($"Додано план лікування #{newPlan.Id} для пацієнта #{newPlan.PatientId}.");
-                            }
-                            else
-                            {
-                                clinic.Logger.LogWarning("Спроба додати невалідний план лікування.");
                             }
                             break;
                         }
@@ -797,122 +821,92 @@ namespace ClinicApp
                     case 3:
                         {
                             Console.Write("ID пацієнта: ");
-                            if (int.TryParse(Console.ReadLine(), out int patientId))
+                            if (!int.TryParse(Console.ReadLine(), out int patientId))
                             {
-                                TreatmentPlan[] patientPlans = clinic.TreatmentPlans.GetByPatient(patientId);
-                                if (patientPlans.Length == 0)
-                                {
-                                    Console.WriteLine("Планів для цього пацієнта не знайдено.");
-                                }
-                                else
-                                {
-                                    foreach (TreatmentPlan plan in patientPlans)
-                                    {
-                                        Console.WriteLine(plan);
-                                    }
-                                }
+                                Console.WriteLine("Невірний ID пацієнта.");
+                                break;
+                            }
+
+                            TreatmentPlan[] plans = clinic.TreatmentPlans.GetByPatient(patientId);
+                            if (plans.Length == 0)
+                            {
+                                Console.WriteLine("Планів для цього пацієнта немає.");
                             }
                             else
                             {
-                                Console.WriteLine("Невірний ID пацієнта.");
-                                clinic.Logger.LogWarning("Помилка введення: невірний ID пацієнта при пошуку планів.");
+                                for (int i = 0; i < plans.Length; i++)
+                                {
+                                    Console.WriteLine(plans[i]);
+                                }
                             }
                             break;
                         }
 
                     case 4:
                         {
-                            Console.Write("ID плану: ");
-                            if (int.TryParse(Console.ReadLine(), out int planId))
+                            Console.Write("ID плану для активації: ");
+                            if (!int.TryParse(Console.ReadLine(), out int planId))
                             {
-                                TreatmentPlan? plan = clinic.TreatmentPlans.GetById(planId);
-                                if (plan == null)
-                                {
-                                    Console.WriteLine("План не знайдено.");
-                                    clinic.Logger.LogWarning($"Спроба активувати неіснуючий план #{planId}.");
-                                }
-                                else if (plan.Activate())
-                                {
-                                    Console.WriteLine("План активовано.");
-                                    clinic.Logger.LogInfo($"Активовано план лікування #{plan.Id}.");
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Неможливо активувати план у поточному статусі.");
-                                    clinic.Logger.LogWarning($"Неможливо активувати план #{plan.Id} (статус: {plan.Status}).");
-                                }
+                                Console.WriteLine("Невірний ID плану.");
+                                break;
+                            }
+
+                            TreatmentPlan? plan = clinic.TreatmentPlans.GetById(planId);
+                            if (plan != null && plan.Activate())
+                            {
+                                Console.WriteLine("План активовано.");
                             }
                             else
                             {
-                                Console.WriteLine("Невірний ID плану.");
-                                clinic.Logger.LogWarning("Помилка введення: невірний ID плану при активації.");
+                                Console.WriteLine("Не вдалося активувати план.");
                             }
                             break;
                         }
 
                     case 5:
                         {
-                            Console.Write("ID плану: ");
-                            if (int.TryParse(Console.ReadLine(), out int planId))
+                            Console.Write("ID плану для завершення: ");
+                            if (!int.TryParse(Console.ReadLine(), out int planId))
                             {
-                                TreatmentPlan? plan = clinic.TreatmentPlans.GetById(planId);
-                                if (plan == null)
-                                {
-                                    Console.WriteLine("План не знайдено.");
-                                    clinic.Logger.LogWarning($"Спроба завершити неіснуючий план #{planId}.");
-                                }
-                                else if (plan.Complete())
-                                {
-                                    Console.WriteLine("План завершено.");
-                                    clinic.Logger.LogInfo($"Завершено план лікування #{plan.Id}.");
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Неможливо завершити план у поточному статусі.");
-                                    clinic.Logger.LogWarning($"Неможливо завершити план #{plan.Id} (статус: {plan.Status}).");
-                                }
+                                Console.WriteLine("Невірний ID плану.");
+                                break;
+                            }
+
+                            if (clinic.TreatmentPlans.Complete(planId))
+                            {
+                                Console.WriteLine("План завершено.");
                             }
                             else
                             {
-                                Console.WriteLine("Невірний ID плану.");
-                                clinic.Logger.LogWarning("Помилка введення: невірний ID плану при завершенні.");
+                                Console.WriteLine("Не вдалося завершити план.");
                             }
                             break;
                         }
 
                     case 6:
                         {
-                            Console.Write("ID плану: ");
-                            if (int.TryParse(Console.ReadLine(), out int planId))
+                            Console.Write("ID плану для скасування: ");
+                            if (!int.TryParse(Console.ReadLine(), out int planId))
                             {
-                                TreatmentPlan? plan = clinic.TreatmentPlans.GetById(planId);
-                                if (plan == null)
-                                {
-                                    Console.WriteLine("План не знайдено.");
-                                    clinic.Logger.LogWarning($"Спроба скасувати неіснуючий план #{planId}.");
-                                }
-                                else if (plan.Cancel())
-                                {
-                                    Console.WriteLine("План скасовано.");
-                                    clinic.Logger.LogInfo($"Скасовано план лікування #{plan.Id}.");
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Неможливо скасувати план у поточному статусі.");
-                                    clinic.Logger.LogWarning($"Неможливо скасувати план #{plan.Id} (статус: {plan.Status}).");
-                                }
+                                Console.WriteLine("Невірний ID плану.");
+                                break;
+                            }
+
+                            TreatmentPlan? plan = clinic.TreatmentPlans.GetById(planId);
+                            if (plan != null && plan.Cancel())
+                            {
+                                Console.WriteLine("План скасовано.");
                             }
                             else
                             {
-                                Console.WriteLine("Невірний ID плану.");
-                                clinic.Logger.LogWarning("Помилка введення: невірний ID плану при скасуванні.");
+                                Console.WriteLine("Не вдалося скасувати план.");
                             }
                             break;
                         }
 
                     case 7:
                         {
-                            ModelValidator.PrintInfo(typeof(TreatmentPlan));
+                            Console.WriteLine($"Тип: {typeof(TreatmentPlan).FullName}");
                             break;
                         }
 
