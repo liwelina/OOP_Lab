@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using ClinicApp.Events;
 
 namespace ClinicApp.Utils
 {
@@ -25,6 +26,40 @@ namespace ClinicApp.Utils
         {
             WriteLog("ERROR", message);
         }
+
+        public void OnPatientAdded(object? sender, PatientEventArgs e)
+            => LogInfo($"Новий пацієнт #{e.PatientId}: {e.FullName}");
+
+        public void OnAppointmentBooked(object? sender, AppointmentEventArgs e)
+            => LogInfo($"Запис #{e.AppointmentId} створено: пацієнт #{e.PatientId} → лікар #{e.DoctorId}, {e.ScheduledAt:dd.MM.yyyy HH:mm}");
+
+        public void OnUrgentAppointmentBooked(object? sender, AppointmentEventArgs e)
+        {
+            string details = string.IsNullOrWhiteSpace(e.Notes)
+                ? $"запис #{e.AppointmentId} (пацієнт #{e.PatientId} → лікар #{e.DoctorId})"
+                : $"запис #{e.AppointmentId}: {e.Notes}";
+            LogWarning($"ТЕРМІНОВИЙ {details}");
+
+            Directory.CreateDirectory("alerts");
+            string alertFile = Path.Combine("alerts", $"urgent_{DateTime.Now:yyyy-MM-dd}.txt");
+            string alertLine = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {details}{Environment.NewLine}";
+            File.AppendAllText(alertFile, alertLine, Encoding.UTF8);
+        }
+
+        public void OnAppointmentCancelled(object? sender, AppointmentEventArgs e)
+        {
+            string reasonPart = string.IsNullOrWhiteSpace(e.Notes) ? "" : $" (причина: {e.Notes})";
+            LogInfo($"Запис #{e.AppointmentId} скасовано{reasonPart}.");
+        }
+
+        public void OnAppointmentCompleted(object? sender, AppointmentEventArgs e)
+            => LogInfo($"Запис #{e.AppointmentId} завершено.");
+
+        public void OnPaymentReceived(object? sender, PaymentEventArgs e)
+            => LogInfo($"Оплата запису #{e.AppointmentId}: {e.Amount:F2} грн");
+
+        public void OnPlanCompleted(object? sender, TreatmentPlanEventArgs e)
+            => LogInfo($"План лікування #{e.PlanId} (пацієнт #{e.PatientId}, діагноз: {e.Diagnosis}) завершено.");
 
         public string[] GetLastLines(int n)
         {

@@ -16,7 +16,11 @@ namespace ClinicApp.Managers
         private int _count = 0;
 
         public int Count => _count;
+
         public event EventHandler<AppointmentEventArgs>? AppointmentBooked;
+        public event EventHandler<AppointmentEventArgs>? AppointmentCancelled;
+        public event EventHandler<AppointmentEventArgs>? AppointmentCompleted;
+        public event EventHandler<AppointmentEventArgs>? UrgentAppointmentBooked;
 
         public Appointment? this[int index]
         {
@@ -62,6 +66,42 @@ namespace ClinicApp.Managers
             AppointmentBooked?.Invoke(this, args);
         }
 
+        private void OnUrgentAppointmentBooked(Appointment appointment, string notes = "")
+        {
+            AppointmentEventArgs args = new AppointmentEventArgs(
+                appointment.Id,
+                appointment.PatientId,
+                appointment.DoctorId,
+                appointment.ScheduledAt,
+                notes);
+
+            UrgentAppointmentBooked?.Invoke(this, args);
+        }
+
+        private void OnAppointmentCancelled(Appointment appointment, string reason = "")
+        {
+            AppointmentEventArgs args = new AppointmentEventArgs(
+                appointment.Id,
+                appointment.PatientId,
+                appointment.DoctorId,
+                appointment.ScheduledAt,
+                reason);
+
+            AppointmentCancelled?.Invoke(this, args);
+        }
+
+        private void OnAppointmentCompleted(Appointment appointment)
+        {
+            AppointmentEventArgs args = new AppointmentEventArgs(
+                appointment.Id,
+                appointment.PatientId,
+                appointment.DoctorId,
+                appointment.ScheduledAt,
+                appointment.Notes);
+
+            AppointmentCompleted?.Invoke(this, args);
+        }
+
         public Appointment[] GetAll()
         {
             Appointment[] copy = new Appointment[_count];
@@ -75,9 +115,9 @@ namespace ClinicApp.Managers
         public static int CancelAll(ICancellable[] items, string reason = "")
         {
             int cancelledCount = 0;
-            foreach (var item in items)
+            for (int i = 0; i < items.Length; i++)
             {
-                if (item.Cancel(reason))
+                if (items[i].Cancel(reason))
                 {
                     cancelledCount++;
                 }
@@ -85,7 +125,21 @@ namespace ClinicApp.Managers
             return cancelledCount;
         }
 
-        public bool Book(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
+        public int CancelAllAppointments(Appointment[] appointments, string reason = "")
+        {
+            int cancelledCount = 0;
+            for (int i = 0; i < appointments.Length; i++)
+            {
+                if (appointments[i].Cancel(reason))
+                {
+                    cancelledCount++;
+                    OnAppointmentCancelled(appointments[i], reason);
+                }
+            }
+            return cancelledCount;
+        }
+
+        public bool Book(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30, string notes = "")
         {
             if (_count >= MaxAppointments)
             {
@@ -115,7 +169,43 @@ namespace ClinicApp.Managers
             _count++;
 
             Console.WriteLine($"Record [{app.Id}] created: {patient.FullName} > {doctor.FullName} о {scheduledAt:dd.MM.yyyy HH:mm}");
-            OnAppointmentBooked(app);
+            OnAppointmentBooked(app, notes);
+
+            return true;
+        }
+
+        public bool BookUrgent(int patientId, int doctorId, DateTime scheduledAt, string notes = "Терміновий прийом", int durationMinutes = 30)
+        {
+            if (_count >= MaxAppointments)
+            {
+                Console.WriteLine("Error: record limit reached.");
+                return false;
+            }
+
+            var patient = _patients.FindById(patientId);
+
+            if (patient == null)
+            {
+                Console.WriteLine($"Error: patient with ID {patientId} not found.");
+                return false;
+            }
+
+            var doctor = _doctors.FindById(doctorId);
+
+            if (doctor == null)
+            {
+                Console.WriteLine($"Error: doctor with ID {doctorId} not found.");
+                return false;
+            }
+
+            var app = new Appointment(patientId, doctorId, scheduledAt, durationMinutes);
+
+            _appointments[_count] = app;
+            _count++;
+
+            Console.WriteLine($"Record [{app.Id}] created: {patient.FullName} > {doctor.FullName} о {scheduledAt:dd.MM.yyyy HH:mm}");
+            OnAppointmentBooked(app, notes);
+            OnUrgentAppointmentBooked(app, notes);
 
             return true;
         }
@@ -135,6 +225,7 @@ namespace ClinicApp.Managers
             if (result)
             {
                 Console.WriteLine($"Record [{id}] has been cancelled.");
+                OnAppointmentCancelled(app, reason);
             }
             else
             {
@@ -159,6 +250,7 @@ namespace ClinicApp.Managers
             if (result)
             {
                 Console.WriteLine($"Record [{id}] completed.");
+                OnAppointmentCompleted(app);
             }
             else
             {
@@ -303,9 +395,9 @@ namespace ClinicApp.Managers
                 return;
             }
 
-            foreach (var app in list)
+            for (int i = 0; i < list.Length; i++)
             {
-                DisplayAppointment(app);
+                DisplayAppointment(list[i]);
             }
         }
     }

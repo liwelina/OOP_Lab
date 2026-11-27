@@ -1,4 +1,5 @@
-﻿using ClinicApp.Interfaces;
+﻿using ClinicApp.Events;
+using ClinicApp.Interfaces;
 using ClinicApp.Models;
 
 namespace ClinicApp.Managers
@@ -7,18 +8,19 @@ namespace ClinicApp.Managers
     {
         private readonly AppointmentManager _appointments;
 
+        public event EventHandler<PaymentEventArgs>? PaymentReceived;
+
         public BillingManager(AppointmentManager appointments)
         {
             _appointments = appointments;
         }
 
-        
         private IPayable[] FilterUnpaid(Appointment[] sourceArray)
         {
             int matches = 0;
-            foreach (var app in sourceArray)
+            for (int i = 0; i < sourceArray.Length; i++)
             {
-                if (!app.IsPaid && !app.IsCancelled)
+                if (!sourceArray[i].IsPaid && !sourceArray[i].IsCancelled)
                 {
                     matches++;
                 }
@@ -26,11 +28,11 @@ namespace ClinicApp.Managers
 
             IPayable[] result = new IPayable[matches];
             int index = 0;
-            foreach (var app in sourceArray)
+            for (int i = 0; i < sourceArray.Length; i++)
             {
-                if (!app.IsPaid && !app.IsCancelled)
+                if (!sourceArray[i].IsPaid && !sourceArray[i].IsCancelled)
                 {
-                    result[index++] = app;
+                    result[index++] = sourceArray[i];
                 }
             }
 
@@ -51,9 +53,9 @@ namespace ClinicApp.Managers
         {
             decimal total = 0m;
             IPayable[] unpaid = GetAllUnpaid();
-            foreach (var item in unpaid)
+            for (int i = 0; i < unpaid.Length; i++)
             {
-                total += item.GetCost();
+                total += unpaid[i].GetCost();
             }
             return total;
         }
@@ -62,9 +64,9 @@ namespace ClinicApp.Managers
         {
             decimal total = 0m;
             IPayable[] unpaid = GetUnpaidByPatient(patientId);
-            foreach (var item in unpaid)
+            for (int i = 0; i < unpaid.Length; i++)
             {
-                total += item.GetCost();
+                total += unpaid[i].GetCost();
             }
             return total;
         }
@@ -72,14 +74,14 @@ namespace ClinicApp.Managers
         public bool PayAppointment(int appointmentId)
         {
             Appointment[] all = _appointments.GetAll();
-            foreach (var app in all)
+            for (int i = 0; i < all.Length; i++)
             {
-                if (app.Id == appointmentId)
+                if (all[i].Id == appointmentId)
                 {
-                    
-                    if (!app.IsPaid && !app.IsCancelled)
+                    if (!all[i].IsPaid && !all[i].IsCancelled)
                     {
-                        app.MarkPaid();
+                        all[i].MarkPaid();
+                        PaymentReceived?.Invoke(this, new PaymentEventArgs(all[i].Id, all[i].GetCost()));
                         return true;
                     }
                     return false;
@@ -96,10 +98,9 @@ namespace ClinicApp.Managers
                 return;
             }
 
-            foreach (var item in items)
+            for (int i = 0; i < items.Length; i++)
             {
-               
-                if (item is Appointment app)
+                if (items[i] is Appointment app)
                 {
                     Console.Write(app.ToString() + " | ");
                 }
@@ -108,8 +109,7 @@ namespace ClinicApp.Managers
                     Console.Write("Об'єкт | ");
                 }
 
-                // Виведення суми у форматі F2 з гривнями
-                Console.WriteLine($"Сума: {item.GetCost().ToString("F2")} грн");
+                Console.WriteLine($"Сума: {items[i].GetCost().ToString("F2")} грн");
             }
         }
     }
